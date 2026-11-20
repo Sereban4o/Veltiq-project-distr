@@ -1,0 +1,46 @@
+vendor/
+node_modules/
+.env
+.env.*
+*.log
+.phpunit.result.cache
+
+bootstrap/cache/
+
+storage/framework/cache/data/*
+!storage/framework/cache/data/.gitkeep
+storage/framework/sessions/*
+!storage/framework/sessions/.gitkeep
+storage/framework/testing/*
+!storage/framework/testing/.gitkeep
+storage/framework/views/*
+!storage/framework/views/.gitkeep
+storage/app/*
+!storage/app/.gitkeep
+storage/logs/*
+!.gitkeep
+
+public/storage
+
+.git
+.gitignore
+.vscode
+.idea
+
+# ── Not part of the runtime image ───────────────────────────────────────────
+# Tests and tooling are development-only: excluding them keeps the shipped
+# image free of QA suites, static-analysis config and API docs.
+tests/
+phpstan.neon
+phpstan-baseline.neon
+pint.json
+phpunit.xml
+phpunit.xml.dist
+swagger/
+docs/
+.github/
+*.md
+!README.md
+.editorconfig
+.git-hooks/
+GIT-HOOKS.md

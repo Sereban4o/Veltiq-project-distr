@@ -1,0 +1,25 @@
+# golangci-lint configuration for the compiled core service.
+run:
+  timeout: 3m
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - gocritic
+    - gosec
+    - misspell
+    - unconvert
+    - bodyclose
+    - errorlint
+
+issues:
+  exclude-rules:
+    # Tests may use long lines and unchecked errors in helpers.
+    - path: _test\.go
+      linters:
+        - gosec
+        - errcheck

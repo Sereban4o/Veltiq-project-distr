@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="GigaCodeAgentSettings">
+    <option name="autoApproveEdits" value="true" />
+    <option name="autoApprovedCommands">
+      <list>
+        <Execute>
+          <option name="pattern" value="cd *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="git status" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="git log *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="git diff *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="Get-ChildItem -Path D:/Github/Veltiqprojectdistr -Force -Directory" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="Get-ChildItem -Path D:/Github/Veltiqprojectdistr -Recurse -Force -Filter &quot;.env*&quot; -ErrorAction SilentlyContinue" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="Get-ChildItem -Path D:/Github/Veltiqprojectdistr/backend/storage -Recurse -Force -File -ErrorAction SilentlyContinue" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="Test-Path D:/Github/Veltiqprojectdistr/backend/vendor" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="Get-ChildItem D:/Github/Veltiqprojectdistr/frontend/public -Force" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="Get-ChildItem D:/Github/Veltiqprojectdistr/backend/storage/logs -Force" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="Get-ChildItem D:/Github/Veltiqprojectdistr/backend/storage -Recurse -Force -Filter &quot;.gitignore&quot;" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="Get-ChildItem D:/Github/Veltiqprojectdistr/frontend/scripts -Force" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="Get-ChildItem D:/Github/Veltiqprojectdistr/backend/storage/app -Force -Recurse -Depth 1 -ErrorAction SilentlyContinue" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="Get-ChildItem D:/Github/Veltiqprojectdistr/backend/storage/app -Recurse -Force -File -ErrorAction SilentlyContinue" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="Get-ChildItem D:/Github/Veltiqprojectdistr -Recurse -Force -File -ErrorAction SilentlyContinue -Include *.pem,*.key,*.p12,*.pfx,id_rsa*,*.keystore" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="git status *" />
+        </Execute>
+      </list>
+    </option>
+  </component>
+</project>

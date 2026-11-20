@@ -1,0 +1,59 @@
+# ONLYOFFICE Document Server for real MS-Office-style editing of the file storage.
+#
+# Start together with the main stack. The JWT secret is read by docker compose
+# from its environment/--env-file (there is no root .env required):
+#
+#   docker compose --env-file backend/.env.production \
+#     -f docker-compose.prod.yml -f docker-compose.onlyoffice.yml up -d
+#
+# Requires in backend/.env.production:
+#   ONLYOFFICE_ENABLED=true
+#   ONLYOFFICE_URL=http://<host>:8082   # must be browser-reachable, NOT localhost
+#   ONLYOFFICE_CALLBACK_BASE_URL=http://nginx
+#   ONLYOFFICE_JWT_SECRET=<any long random string>
+#
+# ONLYOFFICE_URL is loaded by the browser: `localhost` would point at the user's
+# own machine and be blocked (private-network/loopback). Use the server host/IP,
+# or reverse-proxy the DS under the app's origin.
+#
+services:
+  onlyoffice:
+    image: onlyoffice/documentserver:latest
+    container_name: tasksbase-onlyoffice-1
+    restart: unless-stopped
+    environment:
+      - JWT_ENABLED=true
+      - JWT_HEADER=Authorization
+      # Fail fast instead of silently starting with an empty secret.
+      - JWT_SECRET=${ONLYOFFICE_JWT_SECRET:?set ONLYOFFICE_JWT_SECRET (backend/.env.production or --env-file)}
+    ports:
+      - "8082:80"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost/healthcheck || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    volumes:
+      - onlyoffice_data:/var/www/onlyoffice/Data
+      - onlyoffice_log:/var/log/onlyoffice
+      - onlyoffice_lib:/var/lib/onlyoffice
+      - onlyoffice_db:/var/lib/postgresql
+    networks:
+      - tasksbase_default
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  tasksbase_default:
+    external: true
+    name: tasksbase_default
+
+volumes:
+  onlyoffice_data:
+  onlyoffice_log:
+  onlyoffice_lib:
+  onlyoffice_db:

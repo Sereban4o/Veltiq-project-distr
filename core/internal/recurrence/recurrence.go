@@ -1,0 +1,551 @@
+// Package recurrence expands RFC 5545 RRULEs into concrete occurrences.
+//
+// Supported: FREQ=DAILY|WEEKLY|MONTHLY|YEARLY with INTERVAL, COUNT, UNTIL,
+// BYDAY (weekday lists and Nth-weekday forms), BYMONTHDAY (including negatives),
+// BYMONTH and WKST, plus EXDATE exclusion. Anything else (BYSETPOS, BYYEARDAY,
+// BYWEEKNO, sub-daily frequencies, RDATE) is reported as unsupported so the
+// caller keeps using its own engine instead of silently diverging.
+package recurrence
+
+import (
+	"fmt"
+	"sort"
+	"strconv"
+	"strings"
+	"time"
+	_ "time/tzdata" // embedded zoneinfo: the runtime image ships no tzdata
+)
+
+// Request is one expansion job.
+type Request struct {
+	Start    time.Time
+	Duration time.Duration
+	Rrule    string
+	Exdates  []time.Time
+	From     time.Time
+	To       time.Time
+	Limit    int
+	Timezone string
+}
+
+// Occurrence is a concrete instance.
+type Occurrence struct {
+	Start time.Time
+	End   time.Time
+}
+
+// Result is the expansion outcome.
+type Result struct {
+	Items     []Occurrence
+	Truncated bool
+}
+
+// UnsupportedError marks an RRULE the compiled engine deliberately does not handle.
+type UnsupportedError struct{ Reason string }
+
+func (e *UnsupportedError) Error() string { return "unsupported recurrence: " + e.Reason }
+
+type rule struct {
+	freq       string
+	interval   int
+	count      int
+	until      *time.Time
+	byDay      []weekdaySpec
+	byMonthDay []int
+	byMonth    []int
+	wkst       time.Weekday
+}
+
+type weekdaySpec struct {
+	weekday time.Weekday
+	ordinal int // 0 = every occurrence, ±N = Nth within the month
+}
+
+// Expand returns the occurrences inside [From, To], or UnsupportedError.
+func Expand(request Request) (Result, error) {
+	parsed, err := parse(request.Rrule)
+	if err != nil {
+		return Result{}, err
+	}
+
+	location := time.UTC
+	if request.Timezone != "" {
+		loaded, loadErr := time.LoadLocation(request.Timezone)
+		if loadErr == nil {
+			location = loaded
+		}
+	}
+
+	limit := request.Limit
+	if limit <= 0 {
+		limit = 1000
+	}
+
+	if request.Duration < 0 {
+		request.Duration = -request.Duration
+	}
+
+	excluded := map[int64]bool{}
+	for _, exdate := range request.Exdates {
+		excluded[exdate.UTC().Unix()] = true
+	}
+
+	from := request.From.UTC()
+	to := request.To.UTC()
+	startInstant := request.Start.UTC()
+
+	cursor := request.Start.In(location)
+	items := make([]Occurrence, 0, 16)
+	truncated := false
+	// COUNT limits the occurrences produced by the rule, including the ones the
+	// window or EXDATE later drops (RFC 5545).
+	generated := 0
+
+	// Hard stop so a pathological rule cannot loop forever.
+	// ICS practice (and Sabre's behaviour): the DTSTART instant is part of the
+	// series even when the BY* filters do not select it. Every exit path must run
+	// through this finalizer, otherwise the two engines diverge.
+	finalize := func(trunc bool) Result {
+		if !excluded[startInstant.Unix()] && !startInstant.Before(from) && !startInstant.After(to) {
+			isDuplicated := len(items) > 0 && items[0].Start.Equal(startInstant)
+			if !isDuplicated {
+				items = append([]Occurrence{{Start: startInstant, End: startInstant.Add(request.Duration)}}, items...)
+			}
+		}
+
+		if len(items) > limit {
+			items = items[:limit]
+			trunc = true
+		}
+
+		return Result{Items: items, Truncated: trunc}
+	}
+
+	for iteration := 0; iteration < 100000; iteration++ {
+		if parsed.count > 0 && generated >= parsed.count {
+			break
+		}
+
+		candidates, next, advanceErr := nextCandidates(cursor, parsed, request.Start.In(location), location)
+		if advanceErr != nil {
+			return Result{}, advanceErr
+		}
+
+		if next.IsZero() {
+			break
+		}
+		cursor = next
+
+		for _, candidate := range candidates {
+			instant := candidate.UTC()
+
+			if instant.Before(startInstant) {
+				continue
+			}
+
+			if parsed.until != nil && instant.After(*parsed.until) {
+				return finalize(truncated), nil
+			}
+
+			generated++
+			if parsed.count > 0 && generated > parsed.count {
+				return finalize(truncated), nil
+			}
+
+			if instant.After(to) {
+				return finalize(truncated), nil
+			}
+
+			if instant.Before(from) || excluded[instant.Unix()] {
+				continue
+			}
+
+			items = append(items, Occurrence{Start: instant, End: instant.Add(request.Duration)})
+
+			if len(items) >= limit {
+				truncated = true
+
+				return finalize(truncated), nil
+			}
+		}
+	}
+
+	// ICS practice (and Sabre's behaviour): the DTSTART instant is part of the
+	// series even when the BY* filters do not select it. The PHP engine includes
+	// it, so the compiled one must too, otherwise the two diverge.
+	if !excluded[startInstant.Unix()] && !startInstant.Before(from) && !startInstant.After(to) {
+		isDuplicated := len(items) > 0 && items[0].Start.Equal(startInstant)
+		if !isDuplicated {
+			items = append([]Occurrence{{Start: startInstant, End: startInstant.Add(request.Duration)}}, items...)
+		}
+	}
+
+	if len(items) > limit {
+		items = items[:limit]
+		truncated = true
+	}
+
+	return finalize(false), nil
+}
+
+// nextCandidates returns the occurrences generated by the next period and the
+// period start to continue from.
+func nextCandidates(
+	periodStart time.Time,
+	parsed rule,
+	anchor time.Time,
+	location *time.Location,
+) ([]time.Time, time.Time, error) {
+	switch parsed.freq {
+	case "DAILY":
+		return []time.Time{periodStart}, periodStart.AddDate(0, 0, parsed.interval), nil
+	case "WEEKLY":
+		week := weekStart(periodStart, parsed.wkst)
+		days := parsed.byDay
+		if len(days) == 0 {
+			days = []weekdaySpec{{weekday: anchor.Weekday()}}
+		}
+
+		candidates := make([]time.Time, 0, len(days))
+		for _, spec := range days {
+			offset := (int(spec.weekday) - int(parsed.wkst) + 7) % 7
+			candidate := week.AddDate(0, 0, offset)
+			candidate = preserveClock(candidate, anchor, location)
+			candidates = append(candidates, candidate)
+		}
+
+		sort.Slice(candidates, func(i, j int) bool { return candidates[i].Before(candidates[j]) })
+
+		return candidates, week.AddDate(0, 0, 7*parsed.interval), nil
+	case "MONTHLY":
+		return monthlyCandidates(periodStart, anchor, parsed, location), periodStart.AddDate(0, parsed.interval, 0), nil
+	case "YEARLY":
+		return yearlyCandidates(periodStart, anchor, parsed, location), periodStart.AddDate(parsed.interval, 0, 0), nil
+	default:
+		return nil, time.Time{}, &UnsupportedError{Reason: "frequency " + parsed.freq}
+	}
+}
+
+func monthlyCandidates(periodStart, anchor time.Time, parsed rule, location *time.Location) []time.Time {
+	year, month := periodStart.Year(), periodStart.Month()
+
+	if len(parsed.byMonth) > 0 && !containsInt(parsed.byMonth, int(month)) {
+		return nil
+	}
+
+	var candidates []time.Time
+
+	switch {
+	case len(parsed.byMonthDay) > 0:
+		daysInMonth := daysIn(year, month)
+		for _, day := range parsed.byMonthDay {
+			resolved := day
+			if day < 0 {
+				resolved = daysInMonth + day + 1
+			}
+			if resolved < 1 || resolved > daysInMonth {
+				continue
+			}
+			candidate, ok := atClock(time.Date(year, month, resolved, 0, 0, 0, 0, anchor.Location()), anchor, location)
+			if ok {
+				candidates = append(candidates, candidate)
+			}
+		}
+	case len(parsed.byDay) > 0:
+		for _, spec := range parsed.byDay {
+			for _, day := range matchingDaysInMonth(year, month, spec) {
+				candidate, ok := atClock(time.Date(year, month, day, 0, 0, 0, 0, anchor.Location()), anchor, location)
+				if ok {
+					candidates = append(candidates, candidate)
+				}
+			}
+		}
+	default:
+		day := anchor.Day()
+		if day > daysIn(year, month) {
+			return nil
+		}
+		candidate, ok := atClock(time.Date(year, month, day, 0, 0, 0, 0, anchor.Location()), anchor, location)
+		if ok {
+			candidates = append(candidates, candidate)
+		}
+	}
+
+	sort.Slice(candidates, func(i, j int) bool { return candidates[i].Before(candidates[j]) })
+
+	return candidates
+}
+
+func yearlyCandidates(periodStart, anchor time.Time, parsed rule, location *time.Location) []time.Time {
+	months := parsed.byMonth
+	if len(months) == 0 {
+		months = []int{int(anchor.Month())}
+	}
+
+	var candidates []time.Time
+
+	for _, month := range months {
+		monthStart := time.Date(periodStart.Year(), time.Month(month), 1, 0, 0, 0, 0, anchor.Location())
+
+		switch {
+		case len(parsed.byMonthDay) > 0 || len(parsed.byDay) > 0:
+			candidates = append(candidates, monthlyCandidates(monthStart, anchor, parsed, location)...)
+		default:
+			day := anchor.Day()
+			if day > daysIn(periodStart.Year(), time.Month(month)) {
+				continue
+			}
+			candidate, ok := atClock(time.Date(periodStart.Year(), time.Month(month), day, 0, 0, 0, 0, anchor.Location()), anchor, location)
+			if ok {
+				candidates = append(candidates, candidate)
+			}
+		}
+	}
+
+	sort.Slice(candidates, func(i, j int) bool { return candidates[i].Before(candidates[j]) })
+
+	return candidates
+}
+
+// atClock returns the given calendar day at the anchor's wall-clock time in the
+// event timezone; a non-existent local time (DST gap) is skipped.
+func atClock(day time.Time, anchor time.Time, location *time.Location) (time.Time, bool) {
+	hour, minute, second := anchor.Hour(), anchor.Minute(), anchor.Second()
+	local := time.Date(day.Year(), day.Month(), day.Day(), hour, minute, second, 0, location)
+
+	if local.In(location).Hour() != hour || local.In(location).Minute() != minute {
+		return time.Time{}, false
+	}
+
+	return local, true
+}
+
+func preserveClock(candidate, anchor time.Time, location *time.Location) time.Time {
+	local := time.Date(candidate.Year(), candidate.Month(), candidate.Day(),
+		anchor.Hour(), anchor.Minute(), anchor.Second(), 0, location)
+
+	return local
+}
+
+func weekStart(value time.Time, wkst time.Weekday) time.Time {
+	offset := (int(value.Weekday()) - int(wkst) + 7) % 7
+	day := value.AddDate(0, 0, -offset)
+
+	return time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, value.Location())
+}
+
+func matchingDaysInMonth(year int, month time.Month, spec weekdaySpec) []int {
+	total := daysIn(year, month)
+	var matches []int
+
+	for day := 1; day <= total; day++ {
+		if time.Date(year, month, day, 0, 0, 0, 0, time.UTC).Weekday() == spec.weekday {
+			matches = append(matches, day)
+		}
+	}
+
+	if spec.ordinal == 0 {
+		return matches
+	}
+
+	if spec.ordinal > 0 {
+		if spec.ordinal > len(matches) {
+			return nil
+		}
+
+		return []int{matches[spec.ordinal-1]}
+	}
+
+	index := len(matches) + spec.ordinal
+	if index < 0 {
+		return nil
+	}
+
+	return []int{matches[index]}
+}
+
+func daysIn(year int, month time.Month) int {
+	return time.Date(year, month+1, 0, 0, 0, 0, 0, time.UTC).Day()
+}
+
+func containsInt(list []int, value int) bool {
+	for _, item := range list {
+		if item == value {
+			return true
+		}
+	}
+
+	return false
+}
+
+func parse(raw string) (rule, error) {
+	trimmed := strings.TrimSpace(raw)
+	trimmed = strings.TrimPrefix(trimmed, "RRULE:")
+	if trimmed == "" {
+		return rule{}, &UnsupportedError{Reason: "empty rule"}
+	}
+
+	parsed := rule{interval: 1, wkst: time.Monday}
+
+	for _, part := range strings.Split(trimmed, ";") {
+		if part == "" {
+			continue
+		}
+
+		key, value, found := strings.Cut(part, "=")
+		if !found {
+			return rule{}, &UnsupportedError{Reason: "malformed part " + part}
+		}
+
+		switch strings.ToUpper(key) {
+		case "FREQ":
+			parsed.freq = strings.ToUpper(value)
+		case "INTERVAL":
+			number, err := strconv.Atoi(value)
+			if err != nil || number < 1 {
+				return rule{}, &UnsupportedError{Reason: "invalid INTERVAL"}
+			}
+			parsed.interval = number
+		case "COUNT":
+			number, err := strconv.Atoi(value)
+			if err != nil || number < 1 {
+				return rule{}, &UnsupportedError{Reason: "invalid COUNT"}
+			}
+			parsed.count = number
+		case "UNTIL":
+			until, err := parseUntil(value)
+			if err != nil {
+				return rule{}, err
+			}
+			parsed.until = until
+		case "BYDAY":
+			specs, err := parseByDay(value)
+			if err != nil {
+				return rule{}, err
+			}
+			parsed.byDay = specs
+		case "BYMONTHDAY":
+			days, err := parseIntegers(value)
+			if err != nil {
+				return rule{}, err
+			}
+			parsed.byMonthDay = days
+		case "BYMONTH":
+			months, err := parseIntegers(value)
+			if err != nil {
+				return rule{}, err
+			}
+			parsed.byMonth = months
+		case "WKST":
+			weekday, err := parseWeekday(value, 0)
+			if err != nil {
+				return rule{}, err
+			}
+			parsed.wkst = weekday
+		default:
+			return rule{}, &UnsupportedError{Reason: "part " + strings.ToUpper(key)}
+		}
+	}
+
+	if parsed.freq == "" {
+		return rule{}, &UnsupportedError{Reason: "missing FREQ"}
+	}
+
+	return parsed, nil
+}
+
+func parseUntil(value string) (*time.Time, error) {
+	layouts := []string{"20060102T150405Z", "20060102T150405", "20060102"}
+
+	for _, layout := range layouts {
+		if parsed, err := time.ParseInLocation(layout, value, time.UTC); err == nil {
+			instant := parsed.UTC()
+
+			return &instant, nil
+		}
+	}
+
+	return nil, &UnsupportedError{Reason: "invalid UNTIL"}
+}
+
+func parseByDay(value string) ([]weekdaySpec, error) {
+	specs := make([]weekdaySpec, 0, 4)
+
+	for _, item := range strings.Split(value, ",") {
+		item = strings.TrimSpace(item)
+		if item == "" {
+			continue
+		}
+
+		digits := 0
+		for digits < len(item) && (item[digits] == '-' || item[digits] == '+' || (item[digits] >= '0' && item[digits] <= '9')) {
+			digits++
+		}
+
+		ordinal := 0
+		if digits > 0 {
+			number, err := strconv.Atoi(item[:digits])
+			if err != nil {
+				return nil, &UnsupportedError{Reason: "invalid BYDAY"}
+			}
+			ordinal = number
+		}
+
+		weekday, err := parseWeekday(item[digits:], ordinal)
+		if err != nil {
+			return nil, err
+		}
+
+		specs = append(specs, weekdaySpec{weekday: weekday, ordinal: ordinal})
+	}
+
+	if len(specs) == 0 {
+		return nil, &UnsupportedError{Reason: "invalid BYDAY"}
+	}
+
+	return specs, nil
+}
+
+func parseWeekday(token string, _ int) (time.Weekday, error) {
+	switch strings.ToUpper(strings.TrimSpace(token)) {
+	case "MO":
+		return time.Monday, nil
+	case "TU":
+		return time.Tuesday, nil
+	case "WE":
+		return time.Wednesday, nil
+	case "TH":
+		return time.Thursday, nil
+	case "FR":
+		return time.Friday, nil
+	case "SA":
+		return time.Saturday, nil
+	case "SU":
+		return time.Sunday, nil
+	default:
+		return 0, &UnsupportedError{Reason: "invalid weekday " + token}
+	}
+}
+
+func parseIntegers(value string) ([]int, error) {
+	items := strings.Split(value, ",")
+	result := make([]int, 0, len(items))
+
+	for _, item := range items {
+		number, err := strconv.Atoi(strings.TrimSpace(item))
+		if err != nil {
+			return nil, &UnsupportedError{Reason: "invalid number " + item}
+		}
+		result = append(result, number)
+	}
+
+	if len(result) == 0 {
+		return nil, &UnsupportedError{Reason: "empty list"}
+	}
+
+	return result, nil
+}
+
+func (r rule) String() string {
+	return fmt.Sprintf("%s/%d", r.freq, r.interval)
+}

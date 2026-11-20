@@ -1,0 +1,47 @@
+# ONLYOFFICE Document Server for the LOCAL dev stack.
+#
+#   docker compose -f docker-compose.onlyoffice.local.yml up -d onlyoffice
+#
+# Requires in the project-root .env:
+#   ONLYOFFICE_JWT_SECRET=<any long random string>
+#
+# And in backend/.env:
+#   ONLYOFFICE_ENABLED=true
+#   ONLYOFFICE_URL=http://localhost:8082
+#   ONLYOFFICE_CALLBACK_BASE_URL=http://nginx
+#   ONLYOFFICE_JWT_SECRET=<same value>
+#
+services:
+  onlyoffice:
+    image: onlyoffice/documentserver:latest
+    container_name: tasksbase-onlyoffice-1
+    restart: unless-stopped
+    environment:
+      - JWT_ENABLED=true
+      - JWT_HEADER=Authorization
+      - JWT_SECRET=${ONLYOFFICE_JWT_SECRET}
+    ports:
+      - "8090:80"
+    volumes:
+      - onlyoffice_data:/var/www/onlyoffice/Data
+      - onlyoffice_log:/var/log/onlyoffice
+      - onlyoffice_lib:/var/lib/onlyoffice
+      - onlyoffice_db:/var/lib/postgresql
+    networks:
+      - tasksbase-knowledgebase_default
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  tasksbase-knowledgebase_default:
+    external: true
+    name: tasksbase-knowledgebase_default
+
+volumes:
+  onlyoffice_data:
+  onlyoffice_log:
+  onlyoffice_lib:
+  onlyoffice_db:

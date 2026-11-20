@@ -1,0 +1,280 @@
+# Production stack for Tasksbase-Knowledgebase
+#
+#   External IP : <PUBLIC_IP>   (public)
+#   Internal IP : Внутренний IP   (Ubuntu + Docker host)
+#
+# Only nginx (port 80) is published. PostgreSQL / Redis / Meilisearch / Reverb
+# stay on the internal Docker network and are NOT reachable from the internet.
+#
+# Usage:
+#   cp backend/.env.production.example backend/.env.production   # then edit
+#   docker compose -f docker-compose.prod.yml up -d --build
+#   docker compose -f docker-compose.prod.yml exec app php artisan migrate --force --seed
+#   # after every deploy, restart the queue supervisor with the new code:
+#   docker compose -f docker-compose.prod.yml exec worker php artisan horizon:terminate
+#
+# The `scheduler` service keeps Laravel's scheduler running out of the box
+# (alternative: a host cron calling `php artisan schedule:run` every minute).
+
+services:
+  app:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    env_file:
+      - ./backend/.env.production
+    environment:
+      - APP_RELEASE=${APP_RELEASE:-}
+    volumes:
+      - storage_data:/var/www/html/storage
+      - ./updates:/var/www/updates
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+    command: php-fpm
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "php -r 'exit(@fsockopen(\"127.0.0.1\", 9000) ? 0 : 1);'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    env_file:
+      - ./backend/.env.production
+    environment:
+      - APP_RELEASE=${APP_RELEASE:-}
+    volumes:
+      - storage_data:/var/www/html/storage
+    # After every deploy run `php artisan horizon:terminate` in this service so
+    # the master exits gracefully and Docker restarts it on the new code
+    # (see DEPLOY.md Шаг 19.3). The scheduler must be driven separately:
+    # `schedule:work` or a per-minute cron calling `schedule:run`.
+    command: php artisan horizon
+    stop_signal: SIGTERM
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      reverb:
+        condition: service_started
+      meilisearch:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "php artisan horizon:status | grep -q running"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Long-running Laravel scheduler. Without it the nightly reindex, 1C pull,
+  # calendar sync, digests, retention jobs and Horizon snapshots never run.
+  scheduler:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    env_file:
+      - ./backend/.env.production
+    environment:
+      - APP_RELEASE=${APP_RELEASE:-}
+    volumes:
+      - storage_data:/var/www/html/storage
+    command: php artisan schedule:work
+    stop_signal: SIGTERM
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      # Fails when the scheduler stops ticking (heartbeat is written every minute).
+      test: ["CMD-SHELL", "php artisan system:scheduler-health --max-age=300"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  reverb:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    env_file:
+      - ./backend/.env.production
+    volumes:
+      - storage_data:/var/www/html/storage
+    command: php artisan reverb:start --host=0.0.0.0 --port=8080
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    expose:
+      - "8080"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+      args:
+        VITE_REVERB_KEY: ${REVERB_APP_KEY:-chat-key}
+    ports:
+      - "80:80"
+      # - "443:443"   # enable together with TLS certs
+    volumes:
+      - ./updates:/var/www/updates:ro
+    depends_on:
+      - app
+      - reverb
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  postgres:
+    image: postgres:18-alpine
+    env_file:
+      - ./backend/.env.production
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  meilisearch:
+    # Pinned on purpose: the v1.56.1 index format matches the existing
+    # `meilisearchdata` volume. Never use :latest — upgrades are sequential
+    # (dump -> new version -> restore -> `php artisan search:reindex`).
+    # See DEPLOY.md Шаг 19.6.
+    image: getmeili/meilisearch:v1.56.1
+    env_file:
+      - ./backend/.env.production
+    environment:
+      - MEILI_ENV=production
+    volumes:
+      - meilisearchdata:/meili_data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Compiled "protected core" service (Go). Internal only: no published ports,
+  # every request authenticated with CORE_TOKEN from backend/.env.production.
+  core:
+    build:
+      context: ./core
+      dockerfile: Dockerfile
+    env_file:
+      - ./backend/.env.production
+    environment:
+      - CORE_TOKEN=${CORE_TOKEN:?set CORE_TOKEN in backend/.env.production}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/healthz >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  ntfy:
+    image: binwiederhier/ntfy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - 'AUTH=/var/cache/ntfy/auth.db; if [ ! -f "$$AUTH" ]; then ntfy serve & P=$$!; sleep 3; kill $$P 2>/dev/null; wait $$P 2>/dev/null; fi; ntfy user add --ignore-exists --role=admin tasksbase || true; exec ntfy serve'
+    environment:
+      - NTFY_BASE_URL=http://212.109.16.56:8081
+      - NTFY_CACHE_FILE=/var/cache/ntfy/cache.db
+      - NTFY_ATTACHMENT_CACHE_DIR=/var/cache/ntfy/attachments
+      - NTFY_BEHIND_PROXY=true
+      - NTFY_AUTH_FILE=/var/cache/ntfy/auth.db
+      - NTFY_AUTH_DEFAULT_ACCESS=deny-all
+      - NTFY_PASSWORD=tasksbase
+      - NTFY_INIT_USER=tasksbase
+    ports:
+      - "8081:80"
+    volumes:
+      - ntfydata:/var/cache/ntfy
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  pgdata:
+  redisdata:
+  meilisearchdata:
+  storage_data:
+  ntfydata:

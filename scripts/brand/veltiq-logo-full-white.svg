@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 256" width="900" height="256" role="img" aria-label="Veltiq project">
+  <defs>
+    <linearGradient id="veltiq-grad" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0EA5E9"/>
+      <stop offset="0.5" stop-color="#6366F1"/>
+      <stop offset="1" stop-color="#8B5CF6"/>
+    </linearGradient>
+  </defs>
+  <g transform="scale(0.5)">
+    <circle cx="256" cy="256" r="256" fill="#0F172A"/>
+    <circle cx="256" cy="256" r="180" fill="none" stroke="url(#veltiq-grad)" stroke-width="12"/>
+    <circle cx="256" cy="256" r="160" fill="none" stroke="url(#veltiq-grad)" stroke-width="4" opacity="0.3"/>
+    <path d="M176 160 L256 360 L336 160" fill="none" stroke="url(#veltiq-grad)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="300" y="158" font-family="Inter, 'Segoe UI', Arial, sans-serif" font-size="92">
+    <tspan font-weight="700" fill="#FFFFFF">Veltiq</tspan>
+    <tspan font-weight="400" fill="#B8C7DA" dx="14">project</tspan>
+  </text>
+</svg>

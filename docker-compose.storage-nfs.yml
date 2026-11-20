@@ -1,0 +1,48 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# LEGACY: optional NFS mount for the file manager.
+#
+# The app itself has no `nfs://` adapter (only smb/sftp/ftp(s)/webdav). NFS is a
+# kernel-level mount, so mount it via Docker and use the legacy local storage
+# path — the same approach as docker-compose.storage-smb.yml.
+#
+# Everything is driven by environment variables. Put them into a `.env` file
+# next to the compose files (or export them) — see `.env.example`.
+#
+# Required variables:
+#   FILE_STORAGE_NFS_DEVICE   192.168.0.10:/export/storage
+#   FILE_STORAGE_NFS_HOST     192.168.0.10
+#
+# Optional:
+#   FILE_STORAGE_MOUNT_PATH   /mnt/file-storage   (path inside the containers)
+#   FILE_STORAGE_NFS_VERSION  4.1
+#
+# Start the stack with this override:
+#   docker compose -f docker-compose.prod.yml -f docker-compose.storage-nfs.yml up -d
+#
+# Then open the admin panel → «Файловое хранилище», leave the address empty and
+# set the path to FILE_STORAGE_MOUNT_PATH (e.g. /mnt/file-storage). The app then
+# uses the local driver over the mounted directory.
+#
+# Requirements:
+#   - the Docker host needs an NFS client (Ubuntu: `nfs-common`, RHEL: `nfs-utils`);
+#   - write access for uid/gid 33 (www-data in the PHP images). On the NFS server
+#     export with `all_squash,anonuid=33,anongid=33` or grant 33:33 on the export;
+#   - keep the data on a single export: versions/previews rely on atomic `rename`.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  app:
+    volumes:
+      - file_storage:${FILE_STORAGE_MOUNT_PATH:-/mnt/file-storage}
+
+  worker:
+    volumes:
+      - file_storage:${FILE_STORAGE_MOUNT_PATH:-/mnt/file-storage}
+
+volumes:
+  file_storage:
+    driver: local
+    driver_opts:
+      type: nfs
+      device: "${FILE_STORAGE_NFS_DEVICE}"
+      o: "addr=${FILE_STORAGE_NFS_HOST},nfsvers=${FILE_STORAGE_NFS_VERSION:-4.1},rw,hard,timeo=600,retrans=2"

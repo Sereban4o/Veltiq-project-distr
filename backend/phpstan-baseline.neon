@@ -1,0 +1,2089 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Call to function is_string\(\) with string will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Console/Commands/RotateEncryptionKey.php
+
+		-
+			message: '#^Relation ''columns'' is not found in App\\Models\\Board model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Events/BoardUpdated.php
+
+		-
+			message: '#^Relation ''creator'' is not found in App\\Models\\Board model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Events/BoardUpdated.php
+
+		-
+			message: '#^Relation ''project'' is not found in App\\Models\\Board model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Events/BoardUpdated.php
+
+		-
+			message: '#^Relation ''creator'' is not found in App\\Models\\Issue model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Events/IssueUpdated.php
+
+		-
+			message: '#^Relation ''reporter'' is not found in App\\Models\\Issue model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Events/IssueUpdated.php
+
+		-
+			message: '#^Relation ''type'' is not found in App\\Models\\Issue model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Events/IssueUpdated.php
+
+		-
+			message: '#^Relation ''files'' is not found in App\\Models\\Message model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Events/MessageCreated.php
+
+		-
+			message: '#^Relation ''sender'' is not found in App\\Models\\Message model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Events/MessageCreated.php
+
+		-
+			message: '#^Constructor of class App\\Events\\MessageDeleted has an unused parameter \$chat\.$#'
+			identifier: constructor.unusedParameter
+			count: 1
+			path: app/Events/MessageDeleted.php
+
+		-
+			message: '#^Relation ''files'' is not found in App\\Models\\Message model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Events/MessageUpdated.php
+
+		-
+			message: '#^Relation ''sender'' is not found in App\\Models\\Message model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Events/MessageUpdated.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\IssueComment model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Events/NewComment.php
+
+		-
+			message: '#^Relation ''actor'' is not found in App\\Models\\Notification model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Events/NotificationCreated.php
+
+		-
+			message: '#^Relation ''subject'' is not found in App\\Models\\Notification model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Events/NotificationCreated.php
+
+		-
+			message: '#^Relation ''author'' is not found in App\\Models\\Page model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Events/PageUpdated.php
+
+		-
+			message: '#^Relation ''lastEditor'' is not found in App\\Models\\Page model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Events/PageUpdated.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Message\:\:\$files\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Events/PinUpdated.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Message\:\:\$sender\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Events/PinUpdated.php
+
+		-
+			message: '#^Relation ''files'' is not found in App\\Models\\Message model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Events/PinUpdated.php
+
+		-
+			message: '#^Relation ''sender'' is not found in App\\Models\\Message model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Events/PinUpdated.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: app/Exceptions/Handler.php
+
+		-
+			message: '#^Relation ''subject'' is not found in App\\Models\\ActivityLog model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Admin/AuditLogController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\ActivityLog model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Admin/AuditLogController.php
+
+		-
+			message: '#^Relation ''deals'' is not found in App\\Models\\Crm\\PipelineStage model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Admin/CrmStageController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$mailAccount\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Admin/DashboardController.php
+
+		-
+			message: '#^Relation ''creator'' is not found in App\\Models\\Space model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Admin/DashboardController.php
+
+		-
+			message: '#^Relation ''pages'' is not found in App\\Models\\Space model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Admin/DashboardController.php
+
+		-
+			message: '#^Relation ''role'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Admin/DashboardController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>incoming_protocol" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Admin/DashboardController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\Notification model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Admin/NotificationBroadcastController.php
+
+		-
+			message: '#^Relation ''creator'' is not found in App\\Models\\Project model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Admin/AdminController.php
+
+		-
+			message: '#^Relation ''creator'' is not found in App\\Models\\Space model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Http/Controllers/Api/Admin/AdminController.php
+
+		-
+			message: '#^Relation ''issues'' is not found in App\\Models\\Project model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Admin/AdminController.php
+
+		-
+			message: '#^Relation ''pages'' is not found in App\\Models\\Space model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Admin/AdminController.php
+
+		-
+			message: '#^Relation ''role'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 5
+			path: app/Http/Controllers/Api/Admin/AdminController.php
+
+		-
+			message: '#^Relation ''role'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Auth/AuthController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Calendar/CalendarEventLinkController.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Carbon\\Carbon\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/Calendar/CalendarParticipantController.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$validated$#'
+			identifier: parameter.notFound
+			count: 1
+			path: app/Http/Controllers/Api/CalendarController.php
+
+		-
+			message: '#^Property App\\Models\\CalendarEvent\:\:\$ends_at \(Carbon\\Carbon\|null\) does not accept Carbon\\CarbonImmutable\|null\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Http/Controllers/Api/CalendarController.php
+
+		-
+			message: '#^Property App\\Models\\CalendarEvent\:\:\$starts_at \(Carbon\\Carbon\) does not accept Carbon\\CarbonImmutable\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Http/Controllers/Api/CalendarController.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Carbon\\Carbon\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/CalendarController.php
+
+		-
+			message: '#^Relation ''creator'' is not found in App\\Models\\Chat model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Chat/ChatController.php
+
+		-
+			message: '#^Relation ''lastMessage'' is not found in App\\Models\\Chat model\.$#'
+			identifier: larastan.relationExistence
+			count: 4
+			path: app/Http/Controllers/Api/Chat/ChatController.php
+
+		-
+			message: '#^Relation ''members'' is not found in App\\Models\\Chat model\.$#'
+			identifier: larastan.relationExistence
+			count: 10
+			path: app/Http/Controllers/Api/Chat/ChatController.php
+
+		-
+			message: '#^Relation ''messages'' is not found in App\\Models\\Chat model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Chat/ChatController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\File\:\:\$thumbnail_url\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Chat/MessageController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Message\:\:\$chat\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Chat/MessageController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Message\:\:\$files\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Chat/MessageController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Message\:\:\$sender\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Api/Chat/MessageController.php
+
+		-
+			message: '#^Relation ''files'' is not found in App\\Models\\Message model\.$#'
+			identifier: larastan.relationExistence
+			count: 7
+			path: app/Http/Controllers/Api/Chat/MessageController.php
+
+		-
+			message: '#^Relation ''reactions'' is not found in App\\Models\\Message model\.$#'
+			identifier: larastan.relationExistence
+			count: 7
+			path: app/Http/Controllers/Api/Chat/MessageController.php
+
+		-
+			message: '#^Relation ''replies'' is not found in App\\Models\\Message model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Chat/MessageController.php
+
+		-
+			message: '#^Relation ''sender'' is not found in App\\Models\\Message model\.$#'
+			identifier: larastan.relationExistence
+			count: 7
+			path: app/Http/Controllers/Api/Chat/MessageController.php
+
+		-
+			message: '#^Relation ''files'' is not found in App\\Models\\Message model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Chat/MessageSearchController.php
+
+		-
+			message: '#^Relation ''reactions'' is not found in App\\Models\\Message model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Chat/MessageSearchController.php
+
+		-
+			message: '#^Relation ''replies'' is not found in App\\Models\\Message model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Chat/MessageSearchController.php
+
+		-
+			message: '#^Relation ''sender'' is not found in App\\Models\\Message model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Chat/MessageSearchController.php
+
+		-
+			message: '#^Relation ''message'' is not found in App\\Models\\PinnedMessage model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Http/Controllers/Api/Chat/PinController.php
+
+		-
+			message: '#^Relation ''company'' is not found in App\\Models\\Crm\\Activity model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Crm/ActivityController.php
+
+		-
+			message: '#^Relation ''contact'' is not found in App\\Models\\Crm\\Activity model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Crm/ActivityController.php
+
+		-
+			message: '#^Relation ''deal'' is not found in App\\Models\\Crm\\Activity model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Crm/ActivityController.php
+
+		-
+			message: '#^Relation ''owner'' is not found in App\\Models\\Crm\\Activity model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Crm/ActivityController.php
+
+		-
+			message: '#^Relation ''activities'' is not found in App\\Models\\Crm\\Company model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Crm/CompanyController.php
+
+		-
+			message: '#^Relation ''contacts'' is not found in App\\Models\\Crm\\Company model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Crm/CompanyController.php
+
+		-
+			message: '#^Relation ''deals'' is not found in App\\Models\\Crm\\Company model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Crm/CompanyController.php
+
+		-
+			message: '#^Relation ''owner'' is not found in App\\Models\\Crm\\Company model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Crm/CompanyController.php
+
+		-
+			message: '#^Relation ''activities'' is not found in App\\Models\\Crm\\Contact model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Crm/ContactController.php
+
+		-
+			message: '#^Relation ''company'' is not found in App\\Models\\Crm\\Contact model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Http/Controllers/Api/Crm/ContactController.php
+
+		-
+			message: '#^Relation ''deals'' is not found in App\\Models\\Crm\\Contact model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Crm/ContactController.php
+
+		-
+			message: '#^Relation ''owner'' is not found in App\\Models\\Crm\\Contact model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Crm/ContactController.php
+
+		-
+			message: '#^Relation ''contacts'' is not found in App\\Models\\Crm\\Company model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Crm/CounterpartyController.php
+
+		-
+			message: '#^Relation ''deals'' is not found in App\\Models\\Crm\\Company model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Crm/CounterpartyController.php
+
+		-
+			message: '#^Relation ''owner'' is not found in App\\Models\\Crm\\Company model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Crm/CounterpartyController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:files\(\)\.$#'
+			identifier: method.notFound
+			count: 4
+			path: app/Http/Controllers/Api/Crm/CrmFileController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>first_name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/Crm/CrmFileController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/Crm/CrmFileController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>last_name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/Crm/CrmFileController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Crm\\PipelineStage\:\:\$deals_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Crm/DashboardController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Crm\\PipelineStage\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/Api/Crm/DashboardController.php
+
+		-
+			message: '#^Relation ''contact'' is not found in App\\Models\\Crm\\Activity model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Crm/DashboardController.php
+
+		-
+			message: '#^Relation ''deal'' is not found in App\\Models\\Crm\\Activity model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Crm/DashboardController.php
+
+		-
+			message: '#^Relation ''deals'' is not found in App\\Models\\Crm\\PipelineStage model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Crm/DashboardController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Crm\\PipelineStage\:\:\$deals_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Crm/DealController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Crm\\PipelineStage\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/Api/Crm/DealController.php
+
+		-
+			message: '#^Relation ''activities'' is not found in App\\Models\\Crm\\Deal model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Crm/DealController.php
+
+		-
+			message: '#^Relation ''company'' is not found in App\\Models\\Crm\\Deal model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Http/Controllers/Api/Crm/DealController.php
+
+		-
+			message: '#^Relation ''contact'' is not found in App\\Models\\Crm\\Deal model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Http/Controllers/Api/Crm/DealController.php
+
+		-
+			message: '#^Relation ''deals'' is not found in App\\Models\\Crm\\PipelineStage model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Crm/DealController.php
+
+		-
+			message: '#^Relation ''owner'' is not found in App\\Models\\Crm\\Deal model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Crm/DealController.php
+
+		-
+			message: '#^Relation ''stage'' is not found in App\\Models\\Crm\\Deal model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Http/Controllers/Api/Crm/DealController.php
+
+		-
+			message: '#^Relation ''deals'' is not found in App\\Models\\Crm\\PipelineStage model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Crm/PipelineStageController.php
+
+		-
+			message: '#^Method App\\Http\\Controllers\\Api\\FilesController\:\:resolveUser\(\) should return App\\Models\\User\|null but returns Illuminate\\Database\\Eloquent\\Model\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Http/Controllers/Api/FilesController.php
+
+		-
+			message: '#^Parameter \#1 \$user of static method Illuminate\\Support\\Facades\\Auth\:\:login\(\) expects Illuminate\\Contracts\\Auth\\Authenticatable, Illuminate\\Database\\Eloquent\\Model given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Api/FilesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Page\:\:\$author\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Knowledgebase/PageController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\Page\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/Api/Knowledgebase/PageController.php
+
+		-
+			message: '#^Relation ''author'' is not found in App\\Models\\Page model\.$#'
+			identifier: larastan.relationExistence
+			count: 5
+			path: app/Http/Controllers/Api/Knowledgebase/PageController.php
+
+		-
+			message: '#^Relation ''author'' is not found in App\\Models\\PageVersion model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Knowledgebase/PageController.php
+
+		-
+			message: '#^Relation ''children'' is not found in App\\Models\\Page model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Knowledgebase/PageController.php
+
+		-
+			message: '#^Relation ''file'' is not found in App\\Models\\PageAttachment model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Knowledgebase/PageController.php
+
+		-
+			message: '#^Relation ''labels'' is not found in App\\Models\\Page model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Knowledgebase/PageController.php
+
+		-
+			message: '#^Relation ''lastEditor'' is not found in App\\Models\\Page model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Knowledgebase/PageController.php
+
+		-
+			message: '#^Relation ''members'' is not found in App\\Models\\PageComment model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Knowledgebase/PageController.php
+
+		-
+			message: '#^Relation ''page'' is not found in App\\Models\\PageComment model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Knowledgebase/PageController.php
+
+		-
+			message: '#^Relation ''parent'' is not found in App\\Models\\Page model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Knowledgebase/PageController.php
+
+		-
+			message: '#^Relation ''uploader'' is not found in App\\Models\\PageAttachment model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Knowledgebase/PageController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\PageComment model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Http/Controllers/Api/Knowledgebase/PageController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\PagePermission model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Knowledgebase/PageController.php
+
+		-
+			message: '#^Variable \$frontier in empty\(\) always exists and is not falsy\.$#'
+			identifier: empty.variable
+			count: 1
+			path: app/Http/Controllers/Api/Knowledgebase/PageController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Page\:\:\$author\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Knowledgebase/PageExportController.php
+
+		-
+			message: '#^Relation ''author'' is not found in App\\Models\\Page model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Knowledgebase/PageExportController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\PageTemplate\:\:\$space\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Knowledgebase/PageTemplateController.php
+
+		-
+			message: '#^Relation ''creator'' is not found in App\\Models\\PageTemplate model\.$#'
+			identifier: larastan.relationExistence
+			count: 4
+			path: app/Http/Controllers/Api/Knowledgebase/PageTemplateController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Space\:\:\$permissions\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Knowledgebase/SpaceController.php
+
+		-
+			message: '#^Relation ''creator'' is not found in App\\Models\\Space model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Knowledgebase/SpaceController.php
+
+		-
+			message: '#^Relation ''issue'' is not found in App\\Models\\IssueKnowledgebaseLink model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Knowledgebase/TasksbaseEmbedController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/Mail/MailContactController.php
+
+		-
+			message: '#^Relation ''messages'' is not found in App\\Models\\MailFolder model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Mail/MailFolderController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\MailMessage\:\:\$account\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Mail/MailMessageController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\MailMessage\:\:\$attachments\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Mail/MailMessageController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$account\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Api/Mail/MailMessageController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$attachments\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Mail/MailMessageController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 5
+			path: app/Http/Controllers/Api/Mail/MailMessageController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$mail_account_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Mail/MailMessageController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$source\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Mail/MailMessageController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$thread_key\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Mail/MailMessageController.php
+
+		-
+			message: '#^Match expression does not handle remaining value\: mixed$#'
+			identifier: match.unhandled
+			count: 1
+			path: app/Http/Controllers/Api/Mail/MailMessageController.php
+
+		-
+			message: '#^Parameter \#1 \$key of method Illuminate\\Database\\Eloquent\\Collection\<\(int\|string\),Illuminate\\Database\\Eloquent\\Model\>\:\:contains\(\) expects \(callable\(Illuminate\\Database\\Eloquent\\Model, int\|string\)\: bool\)\|Illuminate\\Database\\Eloquent\\Model\|int\|string, Closure\(App\\Models\\MailMessage\)\: bool given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Api/Mail/MailMessageController.php
+
+		-
+			message: '#^Parameter \#2 \$messages of method App\\Services\\Mail\\MailRemoteDeleter\:\:deleteMany\(\) expects array\<int, App\\Models\\MailMessage\>, list\<Illuminate\\Database\\Eloquent\\Model\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Api/Mail/MailMessageController.php
+
+		-
+			message: '#^Relation ''attachments'' is not found in App\\Models\\MailMessage model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Http/Controllers/Api/Mail/MailMessageController.php
+
+		-
+			message: '#^Relation ''targetFolder'' is not found in App\\Models\\MailFilterRule model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Mail/MailRuleController.php
+
+		-
+			message: '#^Relation ''actor'' is not found in App\\Models\\Notification model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/NotificationController.php
+
+		-
+			message: '#^Relation ''subject'' is not found in App\\Models\\ActivityLog model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/NotificationController.php
+
+		-
+			message: '#^Relation ''subject'' is not found in App\\Models\\Notification model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/NotificationController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/NotificationPreferenceController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>in_app" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/NotificationPreferenceController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>websocket" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/NotificationPreferenceController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>first_name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/OfficeController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>id" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/OfficeController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>last_name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/OfficeController.php
+
+		-
+			message: '#^Relation ''type'' is not found in App\\Models\\Issue model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/SearchController.php
+
+		-
+			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Api/Storage/AuditController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/Api/Storage/AuditController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: array\{id\: mixed, user_id\: int\<0, max\>\|null, action\: string, path\: string\|null, size\: int\|null, status\: int\<0, max\>, ip\: string\|null, user_agent\: string\|null, payload\: string\|null, created_at\: mixed\}, Closure\(App\\Models\\StorageAuditLog\)\: array\{id\: mixed, user_id\: int\<0, max\>\|null, action\: string, path\: string\|null, size\: int\|null, status\: int\<0, max\>, ip\: string\|null, user_agent\: string\|null, payload\: string\|null, created_at\: mixed\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Api/Storage/AuditController.php
+
+		-
+			message: '#^Call to an undefined method Symfony\\Component\\HttpFoundation\\Response\:\:withCookie\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Storage/PublicShareController.php
+
+		-
+			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Api/Storage/PublicShareController.php
+
+		-
+			message: '#^Method App\\Services\\Storage\\FileBrowserService\:\:rawResponse\(\) invoked with 2 parameters, 1 required\.$#'
+			identifier: arguments.count
+			count: 1
+			path: app/Http/Controllers/Api/Storage/PublicShareController.php
+
+		-
+			message: '#^Offset ''status'' on array\{status\: string, path\?\: string, mime\?\: string, etag\?\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: app/Http/Controllers/Api/Storage/PublicShareController.php
+
+		-
+			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Api/Storage/VersionController.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Support\\Collection\<int,App\\Models\\StorageVersion\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 1
+			path: app/Http/Controllers/Api/Storage/VersionController.php
+
+		-
+			message: '#^Offset ''status'' on array\{status\: string, path\?\: string, mime\?\: string, etag\?\: string\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
+			path: app/Http/Controllers/Api/StorageController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Board\:\:\$columns\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Api/Tasksbase/BoardController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Board\:\:\$project\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/BoardController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\BoardColumn\:\:\$board\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Api/Tasksbase/BoardController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\BoardColumn\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/BoardController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Issue\:\:\$type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/BoardController.php
+
+		-
+			message: '#^Offset ''high''\|''highest''\|''low''\|''lowest''\|''medium'' on array\{lowest\: ''Низший'', low\: ''Низкий'', medium\: ''Средний'', high\: ''Высокий'', highest\: ''Высший''\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/BoardController.php
+
+		-
+			message: '#^Relation ''columns'' is not found in App\\Models\\Board model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Tasksbase/BoardController.php
+
+		-
+			message: '#^Relation ''creator'' is not found in App\\Models\\Board model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/BoardController.php
+
+		-
+			message: '#^Relation ''project'' is not found in App\\Models\\Board model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Tasksbase/BoardController.php
+
+		-
+			message: '#^Relation ''status'' is not found in App\\Models\\BoardColumn model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/BoardController.php
+
+		-
+			message: '#^Relation ''type'' is not found in App\\Models\\Issue model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/BoardController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>full_name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/BoardController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>key" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/BoardController.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>sort_order" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 2
+			path: app/Http/Controllers/Api/Tasksbase/BoardController.php
+
+		-
+			message: '#^Call to static method create\(\) on an unknown class App\\Models\\Dashboard\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/DashboardController.php
+
+		-
+			message: '#^Call to static method create\(\) on an unknown class App\\Models\\DashboardWidget\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/DashboardController.php
+
+		-
+			message: '#^Call to static method where\(\) on an unknown class App\\Models\\Dashboard\.$#'
+			identifier: class.notFound
+			count: 4
+			path: app/Http/Controllers/Api/Tasksbase/DashboardController.php
+
+		-
+			message: '#^Call to static method where\(\) on an unknown class App\\Models\\DashboardWidget\.$#'
+			identifier: class.notFound
+			count: 3
+			path: app/Http/Controllers/Api/Tasksbase/DashboardController.php
+
+		-
+			message: '#^Relation ''epicIssues'' is not found in App\\Models\\Issue model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Tasksbase/EpicController.php
+
+		-
+			message: '#^Relation ''type'' is not found in App\\Models\\Issue model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/EpicController.php
+
+		-
+			message: '#^Relation ''project'' is not found in App\\Models\\SavedFilter model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/FilterController.php
+
+		-
+			message: '#^Relation ''type'' is not found in App\\Models\\Issue model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/FilterController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\IssueChecklist\:\:\$items\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/IssueChecklistController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\IssueChecklistItem\:\:\$assignee\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/IssueChecklistController.php
+
+		-
+			message: '#^Relation ''assignee'' is not found in App\\Models\\IssueChecklistItem model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/IssueChecklistController.php
+
+		-
+			message: '#^Relation ''items'' is not found in App\\Models\\IssueChecklist model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Tasksbase/IssueChecklistController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\ActivityLog\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/IssueController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\BoardColumn\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\BoardColumn\>\:\:\$board\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/IssueController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\IssueAttachment\:\:\$file\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/IssueController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\IssueComment\:\:\$attachments\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/IssueController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\IssueComment\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/IssueController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\IssueLink\:\:\$source\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/IssueController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\IssueLink\:\:\$target\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/IssueController.php
+
+		-
+			message: '#^Relation ''attachments'' is not found in App\\Models\\Issue model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/IssueController.php
+
+		-
+			message: '#^Relation ''attachments'' is not found in App\\Models\\IssueComment model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Tasksbase/IssueController.php
+
+		-
+			message: '#^Relation ''comments'' is not found in App\\Models\\Issue model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/IssueController.php
+
+		-
+			message: '#^Relation ''creator'' is not found in App\\Models\\Issue model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Http/Controllers/Api/Tasksbase/IssueController.php
+
+		-
+			message: '#^Relation ''creator'' is not found in App\\Models\\IssueLink model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/IssueController.php
+
+		-
+			message: '#^Relation ''file'' is not found in App\\Models\\IssueAttachment model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/IssueController.php
+
+		-
+			message: '#^Relation ''incomingLinks'' is not found in App\\Models\\Issue model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/IssueController.php
+
+		-
+			message: '#^Relation ''issue'' is not found in App\\Models\\IssueComment model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/IssueController.php
+
+		-
+			message: '#^Relation ''links'' is not found in App\\Models\\Issue model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/IssueController.php
+
+		-
+			message: '#^Relation ''members'' is not found in App\\Models\\IssueComment model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/IssueController.php
+
+		-
+			message: '#^Relation ''project'' is not found in App\\Models\\IssueComment model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/IssueController.php
+
+		-
+			message: '#^Relation ''reporter'' is not found in App\\Models\\Issue model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Http/Controllers/Api/Tasksbase/IssueController.php
+
+		-
+			message: '#^Relation ''source'' is not found in App\\Models\\IssueLink model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Tasksbase/IssueController.php
+
+		-
+			message: '#^Relation ''subtasks'' is not found in App\\Models\\Issue model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/IssueController.php
+
+		-
+			message: '#^Relation ''target'' is not found in App\\Models\\IssueLink model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Tasksbase/IssueController.php
+
+		-
+			message: '#^Relation ''type'' is not found in App\\Models\\Issue model\.$#'
+			identifier: larastan.relationExistence
+			count: 7
+			path: app/Http/Controllers/Api/Tasksbase/IssueController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\ActivityLog model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/IssueController.php
+
+		-
+			message: '#^Relation ''user'' is not found in App\\Models\\IssueComment model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Tasksbase/IssueController.php
+
+		-
+			message: '#^Anonymous function has an unused use \$request\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/ProjectController.php
+
+		-
+			message: '#^Relation ''creator'' is not found in App\\Models\\Project model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Tasksbase/ProjectController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Sprint\:\:\$issues\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/Api/Tasksbase/ReportController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Sprint\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Sprint\>\:\:\$issues\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Http/Controllers/Api/Tasksbase/ReportController.php
+
+		-
+			message: '#^Relation ''issues'' is not found in App\\Models\\Sprint model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Tasksbase/ReportController.php
+
+		-
+			message: '#^Relation ''sprintIssues'' is not found in App\\Models\\Issue model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Http/Controllers/Api/Tasksbase/ReportController.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between \(int\|string\) and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/ReportController.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Sprint\:\:\$project\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Http/Controllers/Api/Tasksbase/SprintController.php
+
+		-
+			message: '#^Relation ''issues'' is not found in App\\Models\\Sprint model\.$#'
+			identifier: larastan.relationExistence
+			count: 3
+			path: app/Http/Controllers/Api/Tasksbase/SprintController.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Contracts\\Auth\\StatefulGuard\:\:onceUsingToken\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Http/Middleware/QueryTokenAuth.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Message\:\:\$sender\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Jobs/PushChatMessageNotifications.php
+
+		-
+			message: '#^Relation ''sender'' is not found in App\\Models\\Message model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Jobs/PushChatMessageNotifications.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\NotificationSetting\>\:\:updateQuietly\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Jobs/SendNotificationDigest.php
+
+		-
+			message: '#^Expression on left side of \?\? is not nullable\.$#'
+			identifier: nullCoalesce.expr
+			count: 1
+			path: app/Listeners/NotifyFailedJob.php
+
+		-
+			message: '#^Relation ''role'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Listeners/NotifyFailedJob.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Contracts\\Queue\\Job\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Listeners/NotifyFailedJob.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Throwable\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Listeners/NotifyFailedJob.php
+
+		-
+			message: '#^Relation ''role'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Listeners/NotifyLongWait.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Carbon\\Carbon\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/CalendarEvent.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\File\:\:\$issueAttachments\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/File.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\File\:\:\$messageFiles\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/File.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\File\:\:\$pageAttachments\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/File.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Message\:\:\$chat\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Models/File.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between int\<0, max\> and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Models/Issue.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between int\<0, max\> and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Models/MailMessage.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\MessageFile\:\:\$file\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/MessageFile.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>original_name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Models/MessageFile.php
+
+		-
+			message: '#^Cannot call method isPast\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Models/StorageShare.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$role\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany\<App\\Models\\Project, \$this\(App\\Models\\User\), Illuminate\\Database\\Eloquent\\Relations\\Pivot, string\>\:\:withColumn\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Crm\\Deal\:\:\$company\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Calendar/CalendarAggregator.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Crm\\Deal\:\:\$stage\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/Calendar/CalendarAggregator.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Issue\:\:\$type\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/Calendar/CalendarAggregator.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$color\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Calendar/CalendarAggregator.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$deal\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Calendar/CalendarAggregator.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$deal_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Calendar/CalendarAggregator.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Calendar/CalendarAggregator.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$full_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Calendar/CalendarAggregator.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Services/Calendar/CalendarAggregator.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$issue\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Calendar/CalendarAggregator.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$issue_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Calendar/CalendarAggregator.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Calendar/CalendarAggregator.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Calendar/CalendarAggregator.php
+
+		-
+			message: '#^Parameter \#1 \$array \(list\<array\<string, mixed\>\>\) of array_values is already a list, call has no effect\.$#'
+			identifier: arrayValues.list
+			count: 1
+			path: app/Services/Calendar/CalendarAggregator.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
+			count: 2
+			path: app/Services/Calendar/CalendarAggregator.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,Illuminate\\Database\\Eloquent\\Model\>\:\:map\(\) expects callable\(Illuminate\\Database\\Eloquent\\Model, int\)\: array\{id\: int\<0, max\>, user_id\: int\<0, max\>\|null, email\: string\|null, name\: string\|null, status\: string, role\: string, user\: array\{id\: mixed, full_name\: mixed, email\: mixed\}\|null\}, Closure\(App\\Models\\CalendarEventAttendee\)\: array\{id\: int\<0, max\>, user_id\: int\<0, max\>\|null, email\: string\|null, name\: string\|null, status\: string, role\: string, user\: array\{id\: mixed, full_name\: mixed, email\: mixed\}\|null\} given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Services/Calendar/CalendarAggregator.php
+
+		-
+			message: '#^Relation ''company'' is not found in App\\Models\\Crm\\Deal model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/Calendar/CalendarAggregator.php
+
+		-
+			message: '#^Relation ''stage'' is not found in App\\Models\\Crm\\Deal model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/Calendar/CalendarAggregator.php
+
+		-
+			message: '#^Relation ''type'' is not found in App\\Models\\Issue model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/Calendar/CalendarAggregator.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$external_uid\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Calendar/FeedSyncService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$recurrence_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Calendar/FeedSyncService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/Calendar/IcsService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$full_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Calendar/IcsService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Calendar/IcsService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$role\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Calendar/IcsService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Calendar/IcsService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$user\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/Calendar/IcsService.php
+
+		-
+			message: '#^Access to an undefined property Sabre\\VObject\\Component\\VCalendar\:\:\$PRODID\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Calendar/IcsService.php
+
+		-
+			message: '#^Access to an undefined property Sabre\\VObject\\Component\\VEvent\:\:\$DESCRIPTION\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Calendar/IcsService.php
+
+		-
+			message: '#^Access to an undefined property Sabre\\VObject\\Component\\VEvent\:\:\$DTSTAMP\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Calendar/IcsService.php
+
+		-
+			message: '#^Access to an undefined property Sabre\\VObject\\Component\\VEvent\:\:\$LOCATION\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Calendar/IcsService.php
+
+		-
+			message: '#^Access to an undefined property Sabre\\VObject\\Component\\VEvent\:\:\$SEQUENCE\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Calendar/IcsService.php
+
+		-
+			message: '#^Access to an undefined property Sabre\\VObject\\Component\\VEvent\:\:\$STATUS\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Calendar/IcsService.php
+
+		-
+			message: '#^Access to an undefined property Sabre\\VObject\\Component\\VEvent\:\:\$SUMMARY\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Calendar/IcsService.php
+
+		-
+			message: '#^Access to an undefined property Sabre\\VObject\\Component\\VEvent\:\:\$UID\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Calendar/IcsService.php
+
+		-
+			message: '#^Cannot assign offset ''CN'' to Sabre\\VObject\\Node\.$#'
+			identifier: offsetAssign.dimType
+			count: 2
+			path: app/Services/Calendar/IcsService.php
+
+		-
+			message: '#^Cannot assign offset ''PARTSTAT'' to Sabre\\VObject\\Node\.$#'
+			identifier: offsetAssign.dimType
+			count: 1
+			path: app/Services/Calendar/IcsService.php
+
+		-
+			message: '#^Cannot assign offset ''ROLE'' to Sabre\\VObject\\Node\.$#'
+			identifier: offsetAssign.dimType
+			count: 1
+			path: app/Services/Calendar/IcsService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between Carbon\\Carbon and null will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Services/Calendar/IcsService.php
+
+		-
+			message: '#^Access to an undefined property Sabre\\VObject\\Document\:\:\$VEVENT\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Calendar/RecurrenceExpander.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Crm\\Contact\:\:\$company\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Crm/CrmCsvService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Crm\\Deal\:\:\$company\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Crm/CrmCsvService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Crm\\Deal\:\:\$contact\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Crm/CrmCsvService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Crm\\Deal\:\:\$stage\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Crm/CrmCsvService.php
+
+		-
+			message: '#^Match expression does not handle remaining value\: string$#'
+			identifier: match.unhandled
+			count: 1
+			path: app/Services/Crm/CrmCsvService.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$filters$#'
+			identifier: parameter.notFound
+			count: 1
+			path: app/Services/Crm/CrmCsvService.php
+
+		-
+			message: '#^Relation ''company'' is not found in App\\Models\\Crm\\Contact model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/Crm/CrmCsvService.php
+
+		-
+			message: '#^Relation ''company'' is not found in App\\Models\\Crm\\Deal model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/Crm/CrmCsvService.php
+
+		-
+			message: '#^Relation ''contact'' is not found in App\\Models\\Crm\\Deal model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/Crm/CrmCsvService.php
+
+		-
+			message: '#^Relation ''stage'' is not found in App\\Models\\Crm\\Deal model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/Crm/CrmCsvService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Crm\\Deal\:\:\$bucket\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/Crm/CrmReportsService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Crm\\Deal\:\:\$won_amount\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Crm/CrmReportsService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Crm\\Deal\:\:\$won_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Crm/CrmReportsService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Crm\\PipelineStage\:\:\$deals_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Crm/CrmReportsService.php
+
+		-
+			message: '#^Relation ''deals'' is not found in App\\Models\\Crm\\PipelineStage model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Services/Crm/CrmReportsService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Chat\:\:\$members_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/DmRepairService.php
+
+		-
+			message: '#^Relation ''members'' is not found in App\\Models\\Chat model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/DmRepairService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\File\:\:\$issueAttachments\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Files/FileAccess.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\File\:\:\$messageFiles\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Files/FileAccess.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\File\:\:\$pageAttachments\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Files/FileAccess.php
+
+		-
+			message: '#^Relation ''issueAttachments'' is not found in App\\Models\\File model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/Files/FileAccess.php
+
+		-
+			message: '#^Relation ''messageFiles'' is not found in App\\Models\\File model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/Files/FileAccess.php
+
+		-
+			message: '#^Relation ''pageAttachments'' is not found in App\\Models\\File model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/Files/FileAccess.php
+
+		-
+			message: '#^Offset 0 on array\{\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Mail/ImapClient.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\MailMessage\:\:\$account\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/Mail/MailTrashService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\MailMessage\:\:\$attachments\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Mail/MailTrashService.php
+
+		-
+			message: '#^Relation ''account'' is not found in App\\Models\\MailMessage model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/Mail/MailTrashService.php
+
+		-
+			message: '#^Relation ''attachments'' is not found in App\\Models\\MailMessage model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/Mail/MailTrashService.php
+
+		-
+			message: '#^Offset 0 on non\-empty\-list\<string\> on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Mail/MimeParser.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and null will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Services/Mail/Pop3Client.php
+
+		-
+			message: '#^Call to function method_exists\(\) with Symfony\\Component\\Mailer\\Transport\\Smtp\\EsmtpTransport and ''setAutoTls'' will always evaluate to true\.$#'
+			identifier: function.alreadyNarrowedType
+			count: 1
+			path: app/Services/Mail/SmtpSender.php
+
+		-
+			message: '#^Offset ''to'' on array\{from_email\: string, from_name\?\: string\|null, to\: array\<int, string\>, cc\?\: array\<int, string\>, bcc\?\: array\<int, string\>, subject\?\: string\|null, text\?\: string\|null, html\?\: string\|null, \.\.\.\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Mail/SmtpSender.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\User\:\:\$role\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/Permissions/PermissionService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>timestamp" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/Permissions/PermissionService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Message\:\:\$chat\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Services/Search/ChatMessageSearch.php
+
+		-
+			message: '#^Relation ''chat'' is not found in App\\Models\\Message model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/Search/ChatMessageSearch.php
+
+		-
+			message: '#^Relation ''members'' is not found in App\\Models\\Chat model\.$#'
+			identifier: larastan.relationExistence
+			count: 2
+			path: app/Services/Search/ChatMessageSearch.php
+
+		-
+			message: '#^Relation ''sender'' is not found in App\\Models\\Message model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/Search/ChatMessageSearch.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>first_name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/Search/ChatMessageSearch.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>last_name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/Search/ChatMessageSearch.php
+
+		-
+			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\File\>\:\:visibleTo\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: app/Services/Search/GlobalSearchService.php
+
+		-
+			message: '#^Relation ''issueAttachments'' is not found in App\\Models\\File model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/Search/GlobalSearchService.php
+
+		-
+			message: '#^Relation ''messageFiles'' is not found in App\\Models\\File model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/Search/GlobalSearchService.php
+
+		-
+			message: '#^Relation ''pageAttachments'' is not found in App\\Models\\File model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/Search/GlobalSearchService.php
+
+		-
+			message: '#^PHPDoc tag @param references unknown parameter\: \$meta$#'
+			identifier: parameter.notFound
+			count: 1
+			path: app/Services/Security/AuthEventLogger.php
+
+		-
+			message: '#^Instanceof between League\\Flysystem\\StorageAttributes and League\\Flysystem\\StorageAttributes will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
+			count: 2
+			path: app/Services/Storage/Drivers/FlysystemDriver.php
+
+		-
+			message: '#^Method App\\Services\\Storage\\Drivers\\WebdavDriver\:\:relativeFromHref\(\) never returns null so it can be removed from the return type\.$#'
+			identifier: return.unusedType
+			count: 1
+			path: app/Services/Storage/Drivers/WebdavDriver.php
+
+		-
+			message: '#^Comparison operation "\>" between int\<1, 65535\> and 65535 is always false\.$#'
+			identifier: greater.alwaysFalse
+			count: 1
+			path: app/Services/Storage/StorageAddress.php
+
+		-
+			message: '#^Using nullsafe method call on non\-nullable type Illuminate\\Http\\Request\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 3
+			path: app/Services/Storage/StorageAuditService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>disk" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/Storage/StorageAuditService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>path" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/Storage/StorageAuditService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>path_hash" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/Storage/StorageAuditService.php
+
+		-
+			message: '#^Anonymous function has an unused use \$oldPrefix\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: app/Services/Storage/StorageMetadataService.php
+
+		-
+			message: '#^Call to function method_exists\(\) with Imagick and ''autoOrientImage'' will always evaluate to false\.$#'
+			identifier: function.impossibleType
+			count: 1
+			path: app/Services/Storage/StoragePreviewService.php
+
+		-
+			message: '#^Comparison operation "\<\=" between int\<1, max\> and 0 is always false\.$#'
+			identifier: smallerOrEqual.alwaysFalse
+			count: 2
+			path: app/Services/Storage/StoragePreviewService.php
+
+		-
+			message: '#^Result of \|\| is always false\.$#'
+			identifier: booleanOr.alwaysFalse
+			count: 1
+			path: app/Services/Storage/StoragePreviewService.php
+
+		-
+			message: '#^Cannot call method isFuture\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/Storage/StorageShareService.php
+
+		-
+			message: '#^Cannot call method isPast\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/Storage/StorageShareService.php
+
+		-
+			message: '#^Cannot call method toIso8601String\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: app/Services/Storage/StorageShareService.php
+
+		-
+			message: '#^Property App\\Services\\Storage\\StorageShareService\:\:\$metadata is never read, only written\.$#'
+			identifier: property.onlyWritten
+			count: 1
+			path: app/Services/Storage/StorageShareService.php
+
+		-
+			message: '#^Strict comparison using \!\=\= between int and '''' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
+			count: 1
+			path: app/Services/Storage/StorageShareService.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Services\\Storage\\StorageQuotaService\:\:forget\(\) expects App\\Models\\User\|null, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
+			identifier: argument.type
+			count: 3
+			path: app/Services/Storage/StorageTrashService.php
+
+		-
+			message: '#^Cannot call method isPast\(\) on string\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/Storage/StorageUploadService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>size" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 3
+			path: app/Services/Storage/StorageUploadService.php
+
+		-
+			message: '#^Called ''slice'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
+			count: 1
+			path: app/Services/Storage/StorageVersionService.php
+
+		-
+			message: '#^Relation ''role'' is not found in App\\Models\\User model\.$#'
+			identifier: larastan.relationExistence
+			count: 1
+			path: app/Services/Tasksbase/NotificationBroadcastService.php
+
+		-
+			message: '#^Method App\\Services\\Tasksbase\\NotificationDigestService\:\:typeLabels\(\) should return array\<int, string\> but returns array\<string, string\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Services/Tasksbase/NotificationDigestService.php
+
+		-
+			message: '#^Offset ''email''\|''in_app''\|''websocket'' on array\{in_app\: bool, email\: bool, websocket\: bool\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/Tasksbase/NotificationPreferenceResolver.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/Tasksbase/NotificationPreferenceResolver.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>in_app" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/Tasksbase/NotificationPreferenceResolver.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>websocket" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/Tasksbase/NotificationPreferenceResolver.php
+
+		-
+			message: '#^Call to static method create\(\) on an unknown class App\\Models\\SystemUpdateLog\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Services/Updates/SystemUpdateApplier.php
+
+		-
+			message: '#^Method App\\Services\\Updates\\SystemUpdateApplier\:\:apply\(\) has invalid return type App\\Models\\SystemUpdateLog\.$#'
+			identifier: class.notFound
+			count: 1
+			path: app/Services/Updates/SystemUpdateApplier.php
+
+		-
+			message: '#^Method App\\Support\\Notifications\\NotificationType\:\:grouped\(\) should return array\<string, array\<string, string\>\> but returns array\<string, array\<string, array\<string, string\>\|string\>\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Support/Notifications/NotificationType.php
+
+		-
+			message: '#^Offset 1 on array\{list\<string\>, list\<non\-falsy\-string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Support/Tasksbase/MentionParser.php

@@ -1,0 +1,40 @@
+# Local Ollama server for the "Ask the knowledge base" AI assistant.
+#
+# Optional: start it alongside the main stack when you enable the assistant.
+# The model weights live in a named volume so they survive restarts.
+#
+#   docker compose -f docker-compose.prod.yml -f docker-compose.ollama.yml up -d
+#   docker compose exec ollama ollama pull llama3.1
+#
+# Requires in backend/.env.production (then config:clear / config:cache and
+# recreate the app/worker containers):
+#   AI_ENABLED=true
+#   OLLAMA_URL=http://ollama:11434
+#   AI_MODEL=llama3.1
+#
+# The port is published on the loopback interface only: the backend reaches the
+# service over the internal docker network, the host does not need it public.
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: tasksbase-ollama-1
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    networks:
+      - tasksbase_default
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  tasksbase_default:
+    external: true
+    name: tasksbase_default
+
+volumes:
+  ollama_models:

@@ -1,0 +1,52 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# LEGACY: optional SMB/CIFS mount for the file manager.
+#
+# Network storage is now configured directly in the admin panel
+# («Файловое хранилище») by entering an address (smb://, sftp://, ftp(s)://,
+# https:///webdav://) with a separate login/password — no mounts required.
+# This override is kept only for deployments that still rely on a local mount
+# plus the legacy `storage_path` setting.
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# Everything is driven by environment variables, so the same stack works on any
+# server without code changes. Put the values into a `.env` file next to the
+# compose files (or export them) — see `.env.example` at the repository root.
+#
+# Required variables:
+#   FILE_STORAGE_SMB_DEVICE   //192.168.0.8/сотрудники
+#   FILE_STORAGE_MOUNT_PATH   /mnt/file-storage
+#
+# Authentication (optional — a share may require a login and password):
+#   FILE_STORAGE_SMB_USERNAME   leave empty for guest access (defaults to "guest")
+#   FILE_STORAGE_SMB_PASSWORD
+#   FILE_STORAGE_SMB_EXTRA_OPTIONS  extra mount options, must start with a comma
+#                                   e.g. ,domain=CORP,sec=ntlmssp
+#
+# Start the stack with this override:
+#   docker compose -f docker-compose.prod.yml -f docker-compose.storage-smb.yml up -d
+#
+# Then open the admin panel → «Файловое хранилище» and set the path to
+# FILE_STORAGE_MOUNT_PATH (e.g. /mnt/file-storage).
+#
+# The Docker host must support CIFS mounts. On Ubuntu: `sudo apt install cifs-utils`.
+# Escape `$` in passwords/options as `$$` (Compose variable interpolation).
+# Passwords containing a comma are not supported in mount options — use a
+# credentials file on the host instead (see DEPLOY.md, Шаг 18).
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  app:
+    volumes:
+      - file_storage:${FILE_STORAGE_MOUNT_PATH:-/mnt/file-storage}
+
+  worker:
+    volumes:
+      - file_storage:${FILE_STORAGE_MOUNT_PATH:-/mnt/file-storage}
+
+volumes:
+  file_storage:
+    driver: local
+    driver_opts:
+      type: cifs
+      device: "${FILE_STORAGE_SMB_DEVICE}"
+      o: "username=${FILE_STORAGE_SMB_USERNAME:-guest},password=${FILE_STORAGE_SMB_PASSWORD:-},vers=${FILE_STORAGE_SMB_VERSION:-3.0},uid=${FILE_STORAGE_SMB_UID:-33},gid=${FILE_STORAGE_SMB_GID:-33},iocharset=utf8,file_mode=${FILE_STORAGE_SMB_FILE_MODE:-0775},dir_mode=${FILE_STORAGE_SMB_DIR_MODE:-0775}${FILE_STORAGE_SMB_EXTRA_OPTIONS:-}"
