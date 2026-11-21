@@ -10,7 +10,9 @@
 > - Push-уведомления: **ntfy** на порту **8081** (с авторизацией).
 
 Стек: Laravel 13 (PHP 8.5) + React 19 + PostgreSQL 18 + Redis + Reverb + Meilisearch.
-Публикуются **80** (nginx: SPA + API + WebSocket) и **8081** (ntfy push). SPA собирается внутри `nginx`-образа.
+Публикуются **80** (nginx: SPA + API + WebSocket) и **8081** (ntfy push).
+В дистрибутиве SPA уже собран (`frontend/dist`) и образ nginx только копирует ассеты;
+при сборке из репозитория SPA собирается внутри `nginx`-образа.
 
 ---
 
@@ -350,7 +352,10 @@ docker compose -f docker-compose.prod.yml build --pull
 docker compose -f docker-compose.prod.yml up -d
 ```
 
-> SPA собирается внутри `nginx`-образа. Изменения фронтенда подхватываются только пересборкой. `REVERB_APP_KEY` вшивается в бандл на этапе сборки.
+> В дистрибутиве SPA уже собран — `nginx`-образ только копирует `frontend/dist`, пересборка
+> фронтенда на сервере не выполняется. `REVERB_APP_KEY` вшивается в бандл при упаковке
+> дистрибутива (`scripts/package_distribution.ps1 -ReverbKey <ключ>`). При сборке из
+> репозитория SPA собирается внутри `nginx`-образа и подхватывает изменения только пересборкой.
 
 ### 6.4 Применить миграции
 
@@ -515,6 +520,7 @@ crontab -e
 - [ ] Сменён пароль ntfy (`NTFY_PASSWORD`) и он совпадает в compose, `backend/.env.production` и клиентах
 - [ ] Порт 8081 открыт только для ntfy; auth включён (`deny-all`)
 - [ ] 1С-интеграция: заданы `ONE_C_TOKEN`/`ONE_C_HMAC_SECRET`, при возможности `ONE_C_ALLOWED_IPS`
+- [ ] ONLYOFFICE (если включён): `ONLYOFFICE_URL=/onlyoffice` (same-origin через nginx), `ONLYOFFICE_JWT_SECRET` совпадает с `JWT_SECRET` контейнера `onlyoffice`
 - [ ] Релизы: при включённой проверке подписи настроены `UPDATES_VERIFY_*`, каталог `./updates` доступен на запись `app`
 
 ---
@@ -743,6 +749,46 @@ docker compose -f docker-compose.prod.yml -f docker-compose.storage-nfs.yml up -
 
 ---
 
+### 18.3 ONLYOFFICE — редактор через тот же origin
+
+Document Server отдаётся **браузеру** через основной nginx по пути `/onlyoffice/`, а не отдельным портом.
+
+```dotenv
+# backend/.env.production
+ONLYOFFICE_ENABLED=true
+ONLYOFFICE_URL=/onlyoffice          # НЕ localhost и НЕ фиксированный публичный IP
+ONLYOFFICE_CALLBACK_BASE_URL=http://nginx
+ONLYOFFICE_JWT_SECRET=<тот же, что JWT_SECRET сервиса onlyoffice>
+```
+
+Почему так: редактор грузит `api.js` в **браузере пользователя**. Если задать абсолютный адрес вроде
+`http://<внешний IP>:8082`, он перестаёт открываться у тех, кто заходит из локальной сети — публичный IP
+обычно недоступен изнутри (NAT hairpin). При `ONLYOFFICE_URL=/onlyoffice` адрес берётся из того хоста,
+по которому открыто приложение, поэтому LAN-адрес, публичный IP и домен работают одинаково
+(и нет проблем со mixed content при переходе на HTTPS).
+
+Nginx проксирует `/onlyoffice/` на контейнер `onlyoffice` (`nginx/prod/default.conf`, локация
+`location ^~ /onlyoffice/`). Upstream резолвится на каждый запрос, поэтому nginx стартует и без оверлея
+OnlyOffice — просто отдаёт 502 на этот путь. Если меняли конфиг nginx, пересоберите его образ:
+
+```bash
+docker compose -f docker-compose.prod.yml build nginx
+docker compose -f docker-compose.prod.yml -f docker-compose.onlyoffice.yml up -d
+```
+
+Проверка:
+
+```bash
+curl -fsS http://localhost/up && echo OK
+curl -s -o /dev/null -w '%{http_code}\n' http://localhost/onlyoffice/                                    # 302
+curl -s -o /dev/null -w '%{http_code}\n' http://localhost/onlyoffice/web-apps/apps/api/documents/api.js   # 200
+```
+
+Порт **8082** в `docker-compose.onlyoffice.yml` публикуется только для диагностики — приложению он
+не нужен, и в firewall его открывать не обязательно.
+
+---
+
 ## Шаг 19. Планировщик, поиск, очередь и мониторинг
 
 ### 19.1 Планировщик (`schedule:work` / cron)
@@ -933,3 +979,20 @@ docker compose -f docker-compose.prod.yml exec -T worker php artisan search:rein
 # список задач планировщика
 docker compose -f docker-compose.prod.yml exec -T worker php artisan schedule:list
 ```
+
+### Проверка OPcache/preload (prod)
+
+```bash
+# Образ должен содержать OPcache с заданным preload-скриптом
+cp backend/.env.production.example backend/.env.production
+docker compose -f docker-compose.prod.yml build app
+docker compose -f docker-compose.prod.yml run --rm app php -i | grep -i opcache
+# ожидаем: opcache.enable => On, opcache.jit => tracing,
+#          opcache.preload => /var/www/html/docker/preload.php
+
+# Статистика preload и кэшированных скриптов (на запущенном контейнере)
+docker compose -f docker-compose.prod.yml exec -T app \
+  php -r "\$s=opcache_get_status(false); echo 'cached=',\$s['opcache_statistics']['num_cached_scripts'] ?? -1,' preload=',json_encode(\$s['preload_statistics'] ?? null),PHP_EOL;"
+```
+
+`preload.php` держите минимальным: слишком широкий список классов может не дать php-fpm стартовать.

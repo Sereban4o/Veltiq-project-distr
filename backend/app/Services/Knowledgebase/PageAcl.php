@@ -6,6 +6,7 @@ use App\Models\Page;
 use App\Models\PagePermission;
 use App\Models\Space;
 use App\Models\User;
+use App\Services\Core\CoreClient;
 
 /**
  * Resolves effective page permissions for a single user within one space.
@@ -29,7 +30,10 @@ class PageAcl
     /** @var array<int, array<int, string>> page_id => [user_id => permission] */
     private array $grants;
 
-    public function __construct(private Space $space, private User $user)
+    /** @var array<int, string> memoised effective permissions per page id */
+    private array $resolved = [];
+
+    public function __construct(private Space $space, private User $user, private readonly CoreClient $core)
     {
         $this->pages = [];
         foreach (
@@ -52,7 +56,7 @@ class PageAcl
 
     public static function for(Space $space, User $user): self
     {
-        return new self($space, $user);
+        return new self($space, $user, app(CoreClient::class));
     }
 
     /**
@@ -62,16 +66,64 @@ class PageAcl
      */
     public function effective(Page $page): string
     {
-        if ($this->space->isAdmin($this->user)) {
-            return 'admin';
+        $id = (int) $page->id;
+
+        if (isset($this->resolved[$id])) {
+            return $this->resolved[$id];
         }
 
+        if ($this->space->isAdmin($this->user)) {
+            return $this->resolved[$id] = 'admin';
+        }
+
+        $remote = $this->core->pageAclEffective(
+            false,
+            $this->space->canEdit($this->user),
+            $this->space->canView($this->user),
+            $this->ancestorChain($page),
+        );
+
+        return $this->resolved[$id] = $remote ?? $this->resolveLocally($page);
+    }
+
+    /**
+     * Ancestor chain from the page itself up to its root, as consumed by the
+     * core service.
+     *
+     * @return array<int, array{has_grants: bool, grant: string|null}>
+     */
+    private function ancestorChain(Page $page): array
+    {
+        $chain = [];
+        $current = (int) $page->id;
+        $guard = 0;
+
+        while ($current !== 0 && $guard++ < 500) {
+            $hasGrants = ! empty($this->grants[$current]);
+            $chain[] = [
+                'has_grants' => $hasGrants,
+                'grant' => $hasGrants ? ($this->grants[$current][$this->user->id] ?? null) : null,
+            ];
+
+            $parent = $this->pages[$current]['parent_id'] ?? null;
+
+            if ($parent === null) {
+                break;
+            }
+
+            $current = (int) $parent;
+        }
+
+        return $chain;
+    }
+
+    /** Local resolution, used when the core service is unavailable. */
+    private function resolveLocally(Page $page): string
+    {
         $restricted = $this->nearestRestrictedAncestor($page);
 
         if ($restricted !== null) {
-            $grant = $this->grants[$restricted][$this->user->id] ?? null;
-
-            return $grant ?? 'none';
+            return $this->grants[$restricted][$this->user->id] ?? 'none';
         }
 
         if ($this->space->canEdit($this->user)) {

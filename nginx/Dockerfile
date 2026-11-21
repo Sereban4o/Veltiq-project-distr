@@ -1,25 +1,13 @@
-# ── Stage 1: build the React SPA ─────────────────────────────────────────────
-FROM node:20-alpine AS build
-
-WORKDIR /app
-
-COPY frontend/package.json frontend/package-lock.json* ./
-RUN npm install --legacy-peer-deps
-
-COPY frontend/ ./
-
-ARG VITE_REVERB_KEY=chat-key
-ENV VITE_REVERB_KEY=$VITE_REVERB_KEY
-
-RUN npm run build
-
-# ── Stage 2: nginx serving SPA + reverse proxy to PHP-FPM and Reverb ─────────
+# Distribution image: serves the PREBUILT SPA (frontend/dist) with no Node and
+# no frontend sources. This file is the template for the customer distribution;
+# `scripts/package_distribution.ps1` writes it into the bundle as nginx/Dockerfile,
+# so the bundle's docker-compose.prod.yml stays byte-identical to the repo.
 FROM nginx:alpine
 
 RUN mkdir -p /etc/nginx/snippets
 
 COPY nginx/prod/default.conf /etc/nginx/conf.d/default.conf
 COPY nginx/prod/laravel.conf /etc/nginx/snippets/laravel.conf
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY frontend/dist /usr/share/nginx/html
 
 EXPOSE 80

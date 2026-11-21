@@ -86,6 +86,12 @@
         ],
         "analyse:baseline": [
             "@php vendor/bin/phpstan analyse --memory-limit=1G --generate-baseline"
+        ],
+        "analyse:modules": [
+            "@php vendor/bin/phpstan analyse -c phpstan-modules.neon --memory-limit=1G"
+        ],
+        "analyse:modules:baseline": [
+            "@php vendor/bin/phpstan analyse -c phpstan-modules.neon --memory-limit=1G --generate-baseline=phpstan-modules-baseline.neon"
         ]
     },
     "extra": {

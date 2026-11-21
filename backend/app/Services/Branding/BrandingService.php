@@ -3,6 +3,7 @@
 namespace App\Services\Branding;
 
 use App\Models\Setting;
+use App\Support\HtmlSanitizer;
 
 /**
  * Runtime branding/theme configuration.
@@ -19,6 +20,21 @@ class BrandingService
     public const KEY = 'branding_config';
 
     private const MAX_CSS = 20000;
+
+    private const LAYOUT_SHELLS = ['sidebar-left', 'sidebar-right', 'sidebar-top', 'sidebar-bottom'];
+
+    private const LAYOUT_REGIONS = [
+        'sidebar.top', 'sidebar.main', 'sidebar.bottom',
+        'appbar.left', 'appbar.right',
+        'content.before', 'content.after',
+    ];
+
+    private const LAYOUT_COMPONENTS = [
+        'brand', 'collapse-toggle', 'menu-toggle',
+        'menu.tasksbase', 'menu.knowledgebase', 'calendar', 'logout',
+        'search', 'notifications', 'realtime-status', 'theme-toggle', 'profile',
+        'footer', 'chat-widget',
+    ];
 
     /** @return array<string, mixed> */
     public function defaults(): array
@@ -45,6 +61,21 @@ class BrandingService
             'menu' => ['order' => [], 'hidden' => []],
             'i18n' => ['appTitle' => 'Veltiq project', 'labels' => []],
             'customCss' => '',
+            'layout' => [
+                'shell' => 'sidebar-left',
+                'sidebar' => ['width' => 260, 'collapsed' => 56, 'defaultCollapsed' => false],
+                'regions' => [
+                    'sidebar.top' => ['brand', 'collapse-toggle'],
+                    'sidebar.main' => ['menu.tasksbase', 'menu.knowledgebase'],
+                    'sidebar.bottom' => ['calendar', 'logout'],
+                    'appbar.left' => ['menu-toggle', 'brand'],
+                    'appbar.right' => ['search', 'notifications', 'realtime-status', 'theme-toggle', 'profile'],
+                    'content.before' => [],
+                    'content.after' => ['footer', 'chat-widget'],
+                ],
+                'customHtml' => [],
+                'customIframe' => [],
+            ],
         ];
     }
 
@@ -114,7 +145,123 @@ class BrandingService
                 'labels' => $this->labels($i18n['labels'] ?? null),
             ],
             'customCss' => $this->sanitizeCss((string) ($data['customCss'] ?? '')),
+            'layout' => $this->layout($data['layout'] ?? null, $defaults['layout']),
         ];
+    }
+
+    /**
+     * Sanitise the layout/regions config: shell and component keys are an
+     * allow-list, sizes are clamped and unknown/duplicated entries dropped.
+     *
+     * @param  array<string, mixed>  $default
+     * @return array<string, mixed>
+     */
+    private function layout(mixed $value, array $default): array
+    {
+        $layout = is_array($value) ? $value : [];
+        $sidebar = is_array($layout['sidebar'] ?? null) ? $layout['sidebar'] : [];
+        $regions = is_array($layout['regions'] ?? null) ? $layout['regions'] : [];
+
+        $clean = [];
+        foreach (self::LAYOUT_REGIONS as $region) {
+            $items = is_array($regions[$region] ?? null) ? $regions[$region] : $default['regions'][$region];
+            $clean[$region] = $this->components($items);
+        }
+
+        $shell = $layout['shell'] ?? null;
+
+        return [
+            'shell' => in_array($shell, self::LAYOUT_SHELLS, true) ? $shell : $default['shell'],
+            'sidebar' => [
+                'width' => $this->clampInt($sidebar['width'] ?? null, 180, 400, $default['sidebar']['width']),
+                'collapsed' => $this->clampInt($sidebar['collapsed'] ?? null, 40, 120, $default['sidebar']['collapsed']),
+                'defaultCollapsed' => (bool) ($sidebar['defaultCollapsed'] ?? false),
+            ],
+            'regions' => $clean,
+            'customHtml' => $this->customHtml($layout['customHtml'] ?? null),
+            'customIframe' => $this->customIframe($layout['customIframe'] ?? null),
+        ];
+    }
+
+    /**
+     * Full HTML/CSS/JS documents rendered inside a sandboxed iframe (no
+     * allow-same-origin), so the markup is intentionally NOT rewritten here.
+     * Only the size and the target regions are constrained.
+     *
+     * @return array<string, string>
+     */
+    private function customIframe(mixed $value): array
+    {
+        if (! is_array($value)) {
+            return [];
+        }
+
+        $result = [];
+        foreach (self::LAYOUT_REGIONS as $region) {
+            $html = $value[$region] ?? null;
+
+            if (is_string($html) && trim($html) !== '') {
+                $result[$region] = mb_substr($html, 0, 100000);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Static HTML fragments a customer may place per region. They are sanitised
+     * server-side (the client never trusts them) and length-capped.
+     *
+     * @return array<string, string>
+     */
+    private function customHtml(mixed $value): array
+    {
+        if (! is_array($value)) {
+            return [];
+        }
+
+        $result = [];
+        foreach (self::LAYOUT_REGIONS as $region) {
+            $html = $value[$region] ?? null;
+
+            if (! is_string($html) || trim($html) === '') {
+                continue;
+            }
+
+            $clean = HtmlSanitizer::clean(mb_substr($html, 0, 20000));
+
+            if (is_string($clean) && trim($clean) !== '') {
+                $result[$region] = $clean;
+            }
+        }
+
+        return $result;
+    }
+
+    /** @return list<string> */
+    private function components(mixed $items): array
+    {
+        if (! is_array($items)) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($items as $item) {
+            if (is_string($item) && in_array($item, self::LAYOUT_COMPONENTS, true) && ! in_array($item, $result, true)) {
+                $result[] = $item;
+            }
+        }
+
+        return array_slice($result, 0, 40);
+    }
+
+    private function clampInt(mixed $value, int $min, int $max, int $default): int
+    {
+        if (! is_numeric($value)) {
+            return $default;
+        }
+
+        return (int) max($min, min($max, (int) $value));
     }
 
     private function text(mixed $value, string $default, int $max): string

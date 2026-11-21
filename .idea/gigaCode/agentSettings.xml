@@ -52,6 +52,33 @@
         <Execute>
           <option name="pattern" value="git status *" />
         </Execute>
+        <Execute>
+          <option name="pattern" value="git add *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="git commit *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="Get-ChildItem D:/Github/Veltiqprojectdistr -Force -Directory" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="git rev-parse *" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="Test-Path D:/Github/.git" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="git init" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="Test-Path D:/Github/Veltiqprojectdistr/backend/.env.example" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="Get-ChildItem D:/Github/Veltiqprojectdistr -Force" />
+        </Execute>
+        <Execute>
+          <option name="pattern" value="Get-ChildItem D:/Github/Veltiqprojectdistr -Recurse -Force -Filter &quot;.env&quot; -ErrorAction SilentlyContinue" />
+        </Execute>
       </list>
     </option>
   </component>

@@ -13,7 +13,7 @@ return [
             'url' => env('DB_URL'),
             'host' => env('DB_HOST', 'postgres'),
             'port' => env('DB_PORT', '5432'),
-            'database' => env('DB_DATABASE', 'tasksbase_knowledgebase'),
+            'database' => env('DB_DATABASE', 'veltiq_project'),
             'username' => env('DB_USERNAME', 'postgres'),
             'password' => env('DB_PASSWORD', 'secret'),
             'prefix' => '',

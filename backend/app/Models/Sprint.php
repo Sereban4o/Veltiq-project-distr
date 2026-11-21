@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Sprint extends Model
 {
@@ -19,17 +22,20 @@ class Sprint extends Model
         'end_date' => 'date',
     ];
 
-    public function project()
+    /** @return BelongsTo<Project, $this> */
+    public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
     }
 
-    public function board()
+    /** @return BelongsTo<Board, $this> */
+    public function board(): BelongsTo
     {
         return $this->belongsTo(Board::class);
     }
 
-    public function issues()
+    /** @return BelongsToMany<Issue, $this> */
+    public function issues(): BelongsToMany
     {
         return $this->belongsToMany(Issue::class, 'sprint_issues')
             ->withPivot('rank')
@@ -37,7 +43,8 @@ class Sprint extends Model
             ->withTimestamps();
     }
 
-    public function snapshots()
+    /** @return HasMany<SprintSnapshot, $this> */
+    public function snapshots(): HasMany
     {
         return $this->hasMany(SprintSnapshot::class)->orderBy('snapshot_date');
     }

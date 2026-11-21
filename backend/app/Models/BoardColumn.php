@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BoardColumn extends Model
 {
@@ -13,12 +14,14 @@ class BoardColumn extends Model
 
     // ─── Relationships ───
 
-    public function board()
+    /** @return BelongsTo<Board, $this> */
+    public function board(): BelongsTo
     {
         return $this->belongsTo(Board::class);
     }
 
-    public function status()
+    /** @return BelongsTo<IssueStatus, $this> */
+    public function status(): BelongsTo
     {
         return $this->belongsTo(IssueStatus::class, 'status_id');
     }

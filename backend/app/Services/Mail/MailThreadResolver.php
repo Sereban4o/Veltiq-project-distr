@@ -3,6 +3,7 @@
 namespace App\Services\Mail;
 
 use App\Models\MailMessage;
+use App\Services\Core\CoreClient;
 
 /**
  * Resolves the conversation ("thread") a message belongs to.
@@ -59,8 +60,22 @@ class MailThreadResolver
 
     public static function computeKey(?string $parentKey, ?string $messageId, ?string $subject): string
     {
+        // A known parent key is already the answer; no need to ask the service.
         if ($parentKey !== null && $parentKey !== '') {
             return $parentKey;
+        }
+
+        $normalizedSubject = self::normalizeSubject($subject);
+
+        try {
+            $remote = app(CoreClient::class)->threadKey(null, $messageId, $normalizedSubject);
+        } catch (\Throwable) {
+            // No booted application/container (e.g. plain unit test): keep local.
+            $remote = null;
+        }
+
+        if ($remote !== null) {
+            return $remote;
         }
 
         $id = self::normalizeId($messageId);
@@ -68,7 +83,7 @@ class MailThreadResolver
             return sha1('m:' . $id);
         }
 
-        return sha1('s:' . self::normalizeSubject($subject));
+        return sha1('s:' . $normalizedSubject);
     }
 
     /**

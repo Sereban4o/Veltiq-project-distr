@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Skin;
 use App\Services\Branding\BrandingService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Admin editor for the runtime branding/theme served at `GET /api/v1/branding`.
@@ -19,9 +19,8 @@ class BrandingController extends Controller
     public function index()
     {
         $config = $this->branding->get();
-        $activeSkin = Skin::query()->active()->first(['id', 'name']);
 
-        return view('admin.branding.index', compact('config', 'activeSkin'));
+        return view('admin.branding.index', compact('config'));
     }
 
     public function update(Request $request)
@@ -40,9 +39,16 @@ class BrandingController extends Controller
             'menu_order' => 'nullable|string|max:400',
             'menu_hidden' => 'nullable|string|max:400',
             'labels' => 'nullable|string|max:4000',
+            'layout_shell' => 'nullable|in:sidebar-left,sidebar-right,sidebar-top,sidebar-bottom',
+            'sidebar_width' => 'nullable|integer|min:180|max:400',
+            'sidebar_collapsed' => 'nullable|integer|min:40|max:120',
+            'sidebar_default_collapsed' => 'sometimes|boolean',
+            'layout_regions' => 'nullable|string|max:8000',
+            'layout_html' => 'nullable|string|max:20000',
+            'layout_iframe' => 'nullable|string|max:100000',
         ]);
 
-        $this->branding->save([
+        $payload = [
             'brand' => $validated['brand'] ?? null,
             'appName' => $validated['appName'] ?? null,
             'logo' => $validated['logo'] ?? null,
@@ -65,7 +71,22 @@ class BrandingController extends Controller
                 'hidden' => $this->splitList($validated['menu_hidden'] ?? ''),
             ],
             'customCss' => $validated['customCss'] ?? '',
-        ]);
+            'layout' => [
+                'shell' => $validated['layout_shell'] ?? null,
+                'sidebar' => [
+                    'width' => $validated['sidebar_width'] ?? null,
+                    'collapsed' => $validated['sidebar_collapsed'] ?? null,
+                    'defaultCollapsed' => (bool) ($validated['sidebar_default_collapsed'] ?? false),
+                ],
+                'regions' => $this->parseJsonObject($validated['layout_regions'] ?? ''),
+                'customHtml' => $this->parseJsonObject($validated['layout_html'] ?? ''),
+                'customIframe' => $this->parseJsonObject($validated['layout_iframe'] ?? ''),
+            ],
+        ];
+
+        DB::transaction(function () use ($payload): void {
+            $this->branding->save($payload);
+        });
 
         return redirect()->route('admin.branding.index')->with('success', 'Брендинг сохранён');
     }
@@ -98,5 +119,13 @@ class BrandingController extends Controller
         }
 
         return $result;
+    }
+
+    /** @return array<string, mixed> */
+    private function parseJsonObject(string $value): array
+    {
+        $decoded = json_decode($value, true);
+
+        return is_array($decoded) ? $decoded : [];
     }
 }

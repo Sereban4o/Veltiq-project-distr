@@ -17,11 +17,15 @@ import (
 
 	"github.com/veltiq/core/internal/automation"
 	"github.com/veltiq/core/internal/crm"
+	"github.com/veltiq/core/internal/csvmap"
 	"github.com/veltiq/core/internal/mailmatch"
+	"github.com/veltiq/core/internal/pageacl"
 	"github.com/veltiq/core/internal/permissions"
 	"github.com/veltiq/core/internal/recurrence"
 	"github.com/veltiq/core/internal/searchtext"
 	"github.com/veltiq/core/internal/slots"
+	"github.com/veltiq/core/internal/sprint"
+	"github.com/veltiq/core/internal/threadkey"
 	"github.com/veltiq/core/internal/timesheet"
 )
 
@@ -66,10 +70,15 @@ func main() {
 	mux.HandleFunc("/v1/tasksbase/automation/match", srv.authorized(srv.automationMatch))
 	mux.HandleFunc("/v1/tasksbase/timesheet", srv.authorized(srv.timesheetBuild))
 	mux.HandleFunc("/v1/crm/automation/match", srv.authorized(srv.crmAutomationMatch))
+	mux.HandleFunc("/v1/crm/csv/mapping", srv.authorized(srv.csvMapping))
 	mux.HandleFunc("/v1/permissions/resolve", srv.authorized(srv.permissionResolve))
 	mux.HandleFunc("/v1/mail/rules/resolve", srv.authorized(srv.mailRulesResolve))
+	mux.HandleFunc("/v1/mail/thread/resolve", srv.authorized(srv.threadKeyResolve))
+	mux.HandleFunc("/v1/knowledgebase/page-acl/resolve", srv.authorized(srv.pageAclResolve))
 	mux.HandleFunc("/v1/calendar/expand-recurrence", srv.authorized(srv.expandRecurrence))
 	mux.HandleFunc("/v1/search/snippets", srv.authorized(srv.searchSnippets))
+	mux.HandleFunc("/v1/tasksbase/sprint/burndown", srv.authorized(srv.sprintBurndown))
+	mux.HandleFunc("/v1/tasksbase/sprint/velocity", srv.authorized(srv.sprintVelocity))
 
 	httpServer := &http.Server{
 		Addr:              addr,
@@ -284,6 +293,57 @@ func (s *server) mailRulesResolve(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (s *server) threadKeyResolve(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+
+		return
+	}
+
+	var request threadkey.Request
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&request); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
+
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{"thread_key": threadkey.Compute(request)})
+}
+
+func (s *server) csvMapping(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+
+		return
+	}
+
+	var request csvmap.Request
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4<<20)).Decode(&request); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
+
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{"index": csvmap.Resolve(request)})
+}
+
+func (s *server) pageAclResolve(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+
+		return
+	}
+
+	var request pageacl.Request
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&request); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
+
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{"permission": pageacl.Resolve(request)})
+}
+
 func (s *server) expandRecurrence(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
@@ -398,6 +458,64 @@ func (s *server) searchSnippets(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{
 		"snippets": snippets,
 		"window":   searchtext.Window(payload.Window.PerPage, payload.Window.Page),
+	})
+}
+
+func (s *server) sprintBurndown(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+
+		return
+	}
+
+	var payload struct {
+		StartDate   string            `json:"start_date"`
+		EndDate     string            `json:"end_date"`
+		TotalPoints float64           `json:"total_points"`
+		Snapshots   []sprint.Snapshot `json:"snapshots"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
+
+		return
+	}
+
+	if _, err := time.Parse("2006-01-02", payload.StartDate); err != nil {
+		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": "invalid start_date"})
+
+		return
+	}
+
+	if _, err := time.Parse("2006-01-02", payload.EndDate); err != nil {
+		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": "invalid end_date"})
+
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"total_points": payload.TotalPoints,
+		"series":       sprint.Build(payload.StartDate, payload.EndDate, payload.TotalPoints, payload.Snapshots),
+	})
+}
+
+func (s *server) sprintVelocity(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+
+		return
+	}
+
+	var payload struct {
+		CompletedPoints []float64 `json:"completed_points"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
+
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"average": sprint.VelocityAverage(payload.CompletedPoints),
 	})
 }
 

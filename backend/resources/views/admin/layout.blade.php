@@ -382,7 +382,6 @@
                 <a href="{{ route('admin.counterparties.index') }}" class="{{ request()->routeIs('admin.counterparties.*') ? 'active' : '' }}">🏢 Контрагенты</a>
                 <a href="{{ route('admin.storage.index') }}" class="{{ request()->routeIs('admin.storage.*') ? 'active' : '' }}">🗂️ Хранилище</a>
                 <a href="{{ route('admin.branding.index') }}" class="{{ request()->routeIs('admin.branding.*') ? 'active' : '' }}">🎨 Брендинг</a>
-                <a href="{{ route('admin.skins.index') }}" class="{{ request()->routeIs('admin.skins.*') ? 'active' : '' }}">🖌️ Скины</a>
             </div>
 
             <div class="nav-group">

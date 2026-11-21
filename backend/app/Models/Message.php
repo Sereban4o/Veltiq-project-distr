@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Casts\EncryptedOrPlain;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Message extends Model
@@ -24,32 +26,38 @@ class Message extends Model
         'deleted_at' => 'datetime',
     ];
 
-    public function chat()
+    /** @return BelongsTo<Chat, $this> */
+    public function chat(): BelongsTo
     {
         return $this->belongsTo(Chat::class);
     }
 
-    public function sender()
+    /** @return BelongsTo<User, $this> */
+    public function sender(): BelongsTo
     {
         return $this->belongsTo(User::class, 'sender_id');
     }
 
-    public function parent()
+    /** @return BelongsTo<Message, $this> */
+    public function parent(): BelongsTo
     {
         return $this->belongsTo(Message::class, 'parent_id');
     }
 
-    public function replies()
+    /** @return HasMany<Message, $this> */
+    public function replies(): HasMany
     {
         return $this->hasMany(Message::class, 'parent_id');
     }
 
-    public function files()
+    /** @return HasMany<MessageFile, $this> */
+    public function files(): HasMany
     {
         return $this->hasMany(MessageFile::class);
     }
 
-    public function reactions()
+    /** @return HasMany<MessageReaction, $this> */
+    public function reactions(): HasMany
     {
         return $this->hasMany(MessageReaction::class);
     }

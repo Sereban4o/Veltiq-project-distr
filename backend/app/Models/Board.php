@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Board extends Model
 {
@@ -20,22 +22,26 @@ class Board extends Model
         'wip_enforcement' => 'boolean',
     ];
 
-    public function project()
+    /** @return BelongsTo<Project, $this> */
+    public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
     }
 
-    public function creator()
+    /** @return BelongsTo<User, $this> */
+    public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function columns()
+    /** @return HasMany<BoardColumn, $this> */
+    public function columns(): HasMany
     {
         return $this->hasMany(BoardColumn::class)->orderBy('order');
     }
 
-    public function sprints()
+    /** @return HasMany<Sprint, $this> */
+    public function sprints(): HasMany
     {
         return $this->hasMany(Sprint::class);
     }

@@ -6,6 +6,7 @@ use App\Models\Crm\Company;
 use App\Models\Crm\Contact;
 use App\Models\Crm\Deal;
 use App\Models\Crm\PipelineStage;
+use App\Services\Core\CoreClient;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -25,6 +26,10 @@ class CrmCsvService
     public const MAX_ROWS = 5000;
 
     public const ENTITIES = ['companies', 'contacts', 'deals'];
+
+    public function __construct(private readonly CoreClient $core)
+    {
+    }
 
     /**
      * Column definitions: field => Russian header.
@@ -167,7 +172,18 @@ class CrmCsvService
         $definitions = $this->headers($entity);
         [$header, $dataRows] = $this->readCsv($file, $delimiter);
 
-        $index = $this->resolveMapping($definitions, $header, $mapping);
+        $index = $this->core->csvMapping($header, $definitions, $mapping)
+            ?? $this->resolveMapping($definitions, $header, $mapping);
+
+        // Keep the column order deterministic and identical to the local path
+        // (the core returns an unordered map).
+        $ordered = [];
+        foreach ($definitions as $field => $label) {
+            if (array_key_exists($field, $index)) {
+                $ordered[$field] = $index[$field];
+            }
+        }
+        $index = $ordered;
 
         $total = count($dataRows);
         $errors = [];

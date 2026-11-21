@@ -4,10 +4,17 @@ namespace App\Services\Tasksbase;
 
 use App\Models\Sprint;
 use App\Models\SprintSnapshot;
+use App\Services\Core\CoreClient;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 class SprintMetricsService
 {
+    public function __construct(private readonly CoreClient $core)
+    {
+    }
+
     /**
      * @return array{total: int, done: int, points_total: float, points_done: float}
      */
@@ -67,6 +74,41 @@ class SprintMetricsService
             ? (float) $firstSnapshot->points_total
             : $this->stats($sprint)['points_total'];
 
+        $remote = $this->core->sprintBurndown(
+            $start->toDateString(),
+            $end->toDateString(),
+            $totalPoints,
+            $snapshots->map(fn (SprintSnapshot $snapshot) => [
+                'date' => $snapshot->snapshot_date->toDateString(),
+                'points_total' => (float) $snapshot->points_total,
+                'points_done' => (float) $snapshot->points_done,
+                'issues_total' => $snapshot->issues_total,
+                'issues_done' => $snapshot->issues_done,
+            ])->values()->all(),
+        );
+
+        $series = $remote !== null ? $remote['series'] : $this->localSeries($snapshots, $start, $end, $totalPoints);
+        $totalPoints = $remote !== null ? $remote['total_points'] : round($totalPoints, 2);
+
+        return [
+            'sprint_id' => $sprint->id,
+            'name' => $sprint->name,
+            'start_date' => $start->toDateString(),
+            'end_date' => $end->toDateString(),
+            'total_points' => $totalPoints,
+            'series' => $series,
+            'stats' => $this->stats($sprint),
+        ];
+    }
+
+    /**
+     * Local burndown series, used when the core service is unavailable.
+     *
+     * @param  Collection<string, SprintSnapshot>  $snapshots
+     * @return array<int, array<string, mixed>>
+     */
+    private function localSeries(Collection $snapshots, CarbonInterface $start, CarbonInterface $end, float $totalPoints): array
+    {
         $dayCount = max(1, (int) $start->diffInDays($end));
         $series = [];
 
@@ -91,15 +133,7 @@ class SprintMetricsService
             $index++;
         }
 
-        return [
-            'sprint_id' => $sprint->id,
-            'name' => $sprint->name,
-            'start_date' => $start->toDateString(),
-            'end_date' => $end->toDateString(),
-            'total_points' => round($totalPoints, 2),
-            'series' => $series,
-            'stats' => $this->stats($sprint),
-        ];
+        return $series;
     }
 
     /**
@@ -115,12 +149,15 @@ class SprintMetricsService
             ->get();
 
         $items = [];
+        $completedPoints = [];
 
         foreach ($completed as $completedSprint) {
             $snapshot = $completedSprint->snapshots()->orderByDesc('snapshot_date')->first();
             $points = $snapshot
                 ? (float) $snapshot->points_done
                 : $this->stats($completedSprint)['points_done'];
+
+            $completedPoints[] = round($points, 2);
 
             $items[] = [
                 'sprint_id' => $completedSprint->id,
@@ -130,9 +167,10 @@ class SprintMetricsService
             ];
         }
 
-        $average = $items === []
-            ? 0.0
-            : round(array_sum(array_column($items, 'completed_points')) / count($items), 2);
+        $average = $this->core->sprintVelocityAverage($completedPoints)
+            ?? ($items === []
+                ? 0.0
+                : round(array_sum($completedPoints) / count($completedPoints), 2));
 
         return [
             'sprints' => $items,

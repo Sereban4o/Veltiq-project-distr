@@ -14,7 +14,6 @@ use App\Http\Controllers\Admin\NotificationBroadcastController;
 use App\Http\Controllers\Admin\NotificationSettingsController;
 use App\Http\Controllers\Admin\ReleaseController;
 use App\Http\Controllers\Admin\RoleController;
-use App\Http\Controllers\Admin\SkinController;
 use App\Http\Controllers\Admin\StorageAuditController;
 use App\Http\Controllers\Admin\StorageController;
 use App\Http\Controllers\Admin\WebhookController;
@@ -151,18 +150,6 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])->prefix('admin')->name('ad
     // Runtime branding / theme
     Route::get('/branding', [BrandingController::class, 'index'])->name('branding.index');
     Route::put('/branding', [BrandingController::class, 'update'])->name('branding.update');
-
-    // Branding skins (named appearance presets applied without a rebuild)
-    Route::prefix('skins')->name('skins.')->group(function () {
-        Route::get('/', [SkinController::class, 'index'])->name('index');
-        Route::get('/create', [SkinController::class, 'create'])->name('create');
-        Route::post('/', [SkinController::class, 'store'])->name('store');
-        Route::get('/{skin}/edit', [SkinController::class, 'edit'])->name('edit');
-        Route::put('/{skin}', [SkinController::class, 'update'])->name('update');
-        Route::delete('/{skin}', [SkinController::class, 'destroy'])->name('destroy');
-        Route::post('/{skin}/duplicate', [SkinController::class, 'duplicate'])->name('duplicate');
-        Route::post('/{skin}/apply', [SkinController::class, 'apply'])->name('apply');
-    });
 
     // Outbound webhooks (integrations)
     Route::get('/webhooks', [WebhookController::class, 'index'])->name('webhooks.index');

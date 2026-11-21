@@ -4,6 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Chat extends Model
@@ -20,24 +24,28 @@ class Chat extends Model
         'last_message_at' => 'datetime',
     ];
 
-    public function creator()
+    /** @return BelongsTo<User, $this> */
+    public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function members()
+    /** @return BelongsToMany<User, $this> */
+    public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'chat_members')
             ->withPivot('role', 'last_read_at')
             ->withTimestamps();
     }
 
-    public function messages()
+    /** @return HasMany<Message, $this> */
+    public function messages(): HasMany
     {
         return $this->hasMany(Message::class);
     }
 
-    public function lastMessage()
+    /** @return HasOne<Message, $this> */
+    public function lastMessage(): HasOne
     {
         return $this->hasOne(Message::class)->latestOfMany();
     }

@@ -21,8 +21,12 @@ return [
         ? ($url !== '' && $secret !== '')
         : (bool) filter_var($enabledEnv, FILTER_VALIDATE_BOOL),
 
-    // URL of the Document Server as reachable from the browser
-    // (e.g. http://212.109.16.56:8082). The editor loads api.js from here.
+    // URL of the Document Server as seen BY THE BROWSER. The editor loads
+    // api.js from here and derives the rest of its paths from that script URL.
+    // A host-relative value (default "/onlyoffice") is proxied by nginx to the
+    // `onlyoffice` container, so the editor works for LAN, public IP and domain
+    // access alike. Absolute URLs (http://host:8082) are used as-is and require
+    // the browser to reach that host:port directly.
     'url' => rtrim($url, '/'),
 
     // Base URL the Document Server uses to reach THIS backend for the file

@@ -401,6 +401,174 @@ class CoreClient
     }
 
     /**
+     * Burndown series for a sprint (ideal line plus captured remaining points).
+     *
+     * @param  array<int, array<string, mixed>>  $snapshots
+     * @return array{total_points:float,series:array<int,array<string,mixed>>}|null null → caller builds the series in PHP
+     */
+    public function sprintBurndown(string $startDate, string $endDate, float $totalPoints, array $snapshots): ?array
+    {
+        $response = $this->post('sprint_burndown', '/v1/tasksbase/sprint/burndown', [
+            'start_date' => $startDate,
+            'end_date' => $endDate,
+            'total_points' => $totalPoints,
+            'snapshots' => array_values($snapshots),
+        ]);
+
+        if ($response === null) {
+            return null;
+        }
+
+        $series = $response->json('series');
+        if (! is_array($series)) {
+            $this->fallback('sprint_burndown', 'invalid_response');
+
+            return null;
+        }
+
+        $result = [];
+        foreach ($series as $point) {
+            if (! is_array($point) || ! isset($point['date'])) {
+                continue;
+            }
+
+            $result[] = [
+                'date' => (string) $point['date'],
+                'ideal' => (float) ($point['ideal'] ?? 0),
+                'remaining' => is_numeric($point['remaining'] ?? null) ? (float) $point['remaining'] : null,
+                'issues_total' => is_numeric($point['issues_total'] ?? null) ? (int) $point['issues_total'] : null,
+                'issues_done' => is_numeric($point['issues_done'] ?? null) ? (int) $point['issues_done'] : null,
+            ];
+        }
+
+        return [
+            'total_points' => (float) $response->json('total_points', $totalPoints),
+            'series' => $result,
+        ];
+    }
+
+    /**
+     * Average completed points across finished sprints.
+     *
+     * @param  array<int, float|int>  $completedPoints
+     * @return float|null null → caller averages in PHP
+     */
+    public function sprintVelocityAverage(array $completedPoints): ?float
+    {
+        $response = $this->post('sprint_velocity', '/v1/tasksbase/sprint/velocity', [
+            'completed_points' => array_map('floatval', array_values($completedPoints)),
+        ]);
+
+        if ($response === null) {
+            return null;
+        }
+
+        if (! is_numeric($response->json('average'))) {
+            $this->fallback('sprint_velocity', 'invalid_response');
+
+            return null;
+        }
+
+        return (float) $response->json('average');
+    }
+
+    /**
+     * Resolve CRM CSV column mappings (explicit indexes/names plus auto-map by
+     * Russian labels).
+     *
+     * @param  array<int, string>  $header
+     * @param  array<string, string>  $labels
+     * @param  array<string, mixed>  $mapping
+     * @return array<string, int>|null null → caller resolves in PHP
+     */
+    public function csvMapping(array $header, array $labels, array $mapping): ?array
+    {
+        $response = $this->post('csv_mapping', '/v1/crm/csv/mapping', [
+            'header' => array_values($header),
+            'labels' => (object) $labels,
+            'mapping' => (object) $mapping,
+        ]);
+
+        if ($response === null) {
+            return null;
+        }
+
+        $index = $response->json('index');
+        if (! is_array($index)) {
+            $this->fallback('csv_mapping', 'invalid_response');
+
+            return null;
+        }
+
+        $result = [];
+        foreach ($index as $field => $position) {
+            if (is_string($field) && is_numeric($position)) {
+                $result[$field] = (int) $position;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Conversation key for a mail message (subject already normalised by the
+     * caller, which keeps the PCRE prefix-stripping in PHP).
+     *
+     * @return string|null 40-char sha1 (or the given parent key), null → caller computes in PHP
+     */
+    public function threadKey(?string $parentKey, ?string $messageId, string $normalizedSubject): ?string
+    {
+        $response = $this->post('thread_key', '/v1/mail/thread/resolve', [
+            'parent_key' => $parentKey,
+            'message_id' => $messageId,
+            'normalized_subject' => $normalizedSubject,
+        ]);
+
+        if ($response === null) {
+            return null;
+        }
+
+        $key = $response->json('thread_key');
+        if (! is_string($key) || preg_match('/^[a-f0-9]{40}$/', $key) !== 1) {
+            $this->fallback('thread_key', 'invalid_response');
+
+            return null;
+        }
+
+        return $key;
+    }
+
+    /**
+     * Effective page permission for a user (nearest restricted ancestor wins,
+     * otherwise space-level permissions apply).
+     *
+     * @param  array<int, array{has_grants: bool, grant: string|null}>  $chain  page → root
+     * @return 'admin'|'editor'|'viewer'|'none'|null null → caller resolves in PHP
+     */
+    public function pageAclEffective(bool $isSpaceAdmin, bool $spaceCanEdit, bool $spaceCanView, array $chain): ?string
+    {
+        $response = $this->post('page_acl', '/v1/knowledgebase/page-acl/resolve', [
+            'is_space_admin' => $isSpaceAdmin,
+            'space_can_edit' => $spaceCanEdit,
+            'space_can_view' => $spaceCanView,
+            'chain' => array_values($chain),
+        ]);
+
+        if ($response === null) {
+            return null;
+        }
+
+        $permission = $response->json('permission');
+        if (! in_array($permission, ['admin', 'editor', 'viewer', 'none'], true)) {
+            $this->fallback('page_acl', 'invalid_response');
+
+            return null;
+        }
+
+        return (string) $permission;
+    }
+
+    /**
      * Single place for transport concerns: enabled check, breaker, timeout,
      * failure accounting and logging. Returns null when the caller must fall back.
      */

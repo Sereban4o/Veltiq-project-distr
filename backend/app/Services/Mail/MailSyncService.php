@@ -2,9 +2,11 @@
 
 namespace App\Services\Mail;
 
+use App\Events\MailMessageCreated;
 use App\Models\MailAccount;
 use App\Models\MailAttachment;
 use App\Models\MailMessage;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -182,7 +184,29 @@ class MailSyncService
 
         $this->rules->applyToMessage($message);
 
+        $this->announce($message);
+
         return $message;
+    }
+
+    /**
+     * Nudge the user's open mailbox over Reverb, throttled so a batch of synced
+     * messages produces a single broadcast per user within the window.
+     */
+    private function announce(MailMessage $message): void
+    {
+        $window = (int) config('mail.realtime_throttle_seconds', 5);
+
+        if ($window > 0 && ! Cache::add('mail:realtime:' . $message->user_id, true, $window)) {
+            return;
+        }
+
+        MailMessageCreated::dispatch(
+            (int) $message->user_id,
+            (int) $message->mail_account_id,
+            (int) $message->id,
+            (string) $message->folder,
+        );
     }
 
     /**

@@ -6,6 +6,8 @@ use App\Support\SearchText;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Scout\Searchable;
 
@@ -38,7 +40,8 @@ class Issue extends Model
         return $this->belongsTo(Project::class);
     }
 
-    public function type()
+    /** @return BelongsTo<IssueType, $this> */
+    public function type(): BelongsTo
     {
         return $this->belongsTo(IssueType::class, 'issue_type_id');
     }
@@ -49,12 +52,14 @@ class Issue extends Model
         return $this->belongsTo(IssueStatus::class, 'status_id');
     }
 
-    public function parent()
+    /** @return BelongsTo<Issue, $this> */
+    public function parent(): BelongsTo
     {
         return $this->belongsTo(Issue::class, 'parent_id');
     }
 
-    public function subtasks()
+    /** @return HasMany<Issue, $this> */
+    public function subtasks(): HasMany
     {
         return $this->hasMany(Issue::class, 'parent_id');
     }
@@ -65,7 +70,8 @@ class Issue extends Model
         return $this->belongsTo(Issue::class, 'epic_id');
     }
 
-    public function epicIssues()
+    /** @return HasMany<Issue, $this> */
+    public function epicIssues(): HasMany
     {
         return $this->hasMany(Issue::class, 'epic_id');
     }
@@ -76,62 +82,74 @@ class Issue extends Model
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
-    public function reporter()
+    /** @return BelongsTo<User, $this> */
+    public function reporter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reporter_id');
     }
 
-    public function creator()
+    /** @return BelongsTo<User, $this> */
+    public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function comments()
+    /** @return HasMany<IssueComment, $this> */
+    public function comments(): HasMany
     {
         return $this->hasMany(IssueComment::class);
     }
 
-    public function attachments()
+    /** @return HasMany<IssueAttachment, $this> */
+    public function attachments(): HasMany
     {
         return $this->hasMany(IssueAttachment::class);
     }
 
-    public function checklists()
+    /** @return HasMany<IssueChecklist, $this> */
+    public function checklists(): HasMany
     {
         return $this->hasMany(IssueChecklist::class)->orderBy('position')->orderBy('id');
     }
 
-    public function worklogs()
+    /** @return HasMany<IssueWorklog, $this> */
+    public function worklogs(): HasMany
     {
         return $this->hasMany(IssueWorklog::class)->orderByDesc('started_at');
     }
 
-    public function links()
+    /** @return HasMany<IssueLink, $this> */
+    public function links(): HasMany
     {
         return $this->hasMany(IssueLink::class, 'source_issue_id');
     }
 
-    public function incomingLinks()
+    /** @return HasMany<IssueLink, $this> */
+    public function incomingLinks(): HasMany
     {
         return $this->hasMany(IssueLink::class, 'target_issue_id');
     }
 
-    public function sprintIssues()
+    /** @return HasMany<SprintIssue, $this> */
+    public function sprintIssues(): HasMany
     {
         return $this->hasMany(SprintIssue::class);
     }
 
-    public function knowledgebaseLinks()
+    /** @return HasMany<IssueKnowledgebaseLink, $this> */
+    public function knowledgebaseLinks(): HasMany
     {
         return $this->hasMany(IssueKnowledgebaseLink::class);
     }
 
-    public function calendarEventLinks()
+    /** @return HasMany<CalendarEventLink, $this> */
+    public function calendarEventLinks(): HasMany
     {
         return $this->hasMany(CalendarEventLink::class, 'issue_id');
     }
 
-    public function calendarEvents()
+    /** @return BelongsToMany<CalendarEvent, $this> */
+    public function calendarEvents(): BelongsToMany
     {
         return $this->belongsToMany(CalendarEvent::class, 'calendar_event_links', 'issue_id', 'event_id')
             ->withTimestamps();

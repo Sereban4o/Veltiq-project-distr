@@ -1,0 +1,4 @@
+# Only the nginx configs and the prebuilt SPA are needed for the image.
+*
+!nginx/**
+!frontend/dist/**

@@ -8,13 +8,17 @@
 #
 # Requires in backend/.env.production:
 #   ONLYOFFICE_ENABLED=true
-#   ONLYOFFICE_URL=http://<host>:8082   # must be browser-reachable, NOT localhost
+#   ONLYOFFICE_URL=/onlyoffice       # proxied by the app's nginx, see below
 #   ONLYOFFICE_CALLBACK_BASE_URL=http://nginx
 #   ONLYOFFICE_JWT_SECRET=<any long random string>
 #
-# ONLYOFFICE_URL is loaded by the browser: `localhost` would point at the user's
-# own machine and be blocked (private-network/loopback). Use the server host/IP,
-# or reverse-proxy the DS under the app's origin.
+# ONLYOFFICE_URL=/onlyoffice is served by the app's own nginx
+# (nginx/prod/default.conf -> location /onlyoffice/) which proxies to this
+# container. The browser therefore always talks to the same origin it opened
+# the app with: LAN address, public IP and domain all work. Hardcoding a
+# public IP:port (http://IP:8082) breaks access from the LAN, where the public
+# IP is usually not routable. The published 8082 port is kept for direct
+# diagnostics only — the application never uses it at runtime.
 #
 services:
   onlyoffice:
