@@ -235,13 +235,19 @@ services:
     env_file:
       - ./backend/.env.production
     environment:
-      - CORE_TOKEN=${CORE_TOKEN:?set CORE_TOKEN in backend/.env.production}
       - CORE_STATE_DIR=/var/lib/core
-      - CORE_DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-tasksbase}?sslmode=disable
       - LICENSE_PUBLIC_KEY=${LICENSE_PUBLIC_KEY:-}
       - LICENSE_ALLOW_GRANDFATHER=${LICENSE_ALLOW_GRANDFATHER:-true}
       - LICENSE_SERVER_URL=${LICENSE_SERVER_URL:-}
       - LICENSE_HEARTBEAT_HOURS=${LICENSE_HEARTBEAT_HOURS:-6}
+    # Compose interpolation only reads the shell and the project `.env` — never
+    # `env_file` — so CORE_TOKEN/POSTGRES_* (declared in backend/.env.production)
+    # are resolved here at container start instead of failing compose `:?` checks.
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        export CORE_DATABASE_URL="postgres://$${POSTGRES_USER:-postgres}:$${POSTGRES_PASSWORD}@postgres:5432/$${POSTGRES_DB:-tasksbase}?sslmode=disable"
+        exec /usr/local/bin/core
     volumes:
       - core_data:/var/lib/core
     depends_on:
