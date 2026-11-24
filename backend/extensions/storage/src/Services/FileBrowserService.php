@@ -2,9 +2,9 @@
 
 namespace App\Extensions\Storage\Services;
 
+use App\Extensions\Storage\Services\Contracts\StorageDriver;
 use App\Models\StorageMeta;
 use App\Models\User;
-use App\Extensions\Storage\Services\Contracts\StorageDriver;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -319,6 +319,7 @@ class FileBrowserService
         }
 
         $name = $entry['name'] !== '' ? $entry['name'] : StoragePath::name($relative);
+        $name = $this->toUtf8($name);
         $size = (int) ($entry['size'] ?? 0);
         $extension = strtolower(pathinfo($name, PATHINFO_EXTENSION));
         $mime = $entry['mime'] ?? 'application/octet-stream';
@@ -327,7 +328,7 @@ class FileBrowserService
         $isText = $this->looksLikeText($relative, $extension, $mime, $size, $maxEdit);
         $content = null;
         if ($isText && $size <= $maxEdit) {
-            $content = $this->driver()->read($relative);
+            $content = $this->toUtf8($this->driver()->read($relative));
         }
 
         return [
@@ -346,6 +347,26 @@ class FileBrowserService
             'too_large' => $size > $maxEdit,
             'content' => $content,
         ];
+    }
+
+    /**
+     * JSON responses must be valid UTF-8. Files uploaded from Windows often
+     * carry CP1251/KOI8-R bytes; convert them instead of failing json_encode.
+     */
+    private function toUtf8(string $value): string
+    {
+        if ($value === '' || mb_check_encoding($value, 'UTF-8')) {
+            return $value;
+        }
+
+        $encoding = mb_detect_encoding($value, ['UTF-8', 'Windows-1251', 'KOI8-R', 'ISO-8859-1'], true)
+            ?: 'Windows-1251';
+
+        $converted = @mb_convert_encoding($value, 'UTF-8', $encoding);
+
+        return mb_check_encoding($converted, 'UTF-8')
+            ? $converted
+            : mb_convert_encoding($converted, 'UTF-8', 'UTF-8');
     }
 
     /**
