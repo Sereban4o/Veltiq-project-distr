@@ -203,6 +203,11 @@ func TestAllows(t *testing.T) {
 	if status.Allows("mail") {
 		t.Fatal("mail must not be allowed")
 	}
+
+	// A grandfathered install has no license file and ships fully enabled.
+	if !(Status{State: StateGrandfathered}).Allows("mail") {
+		t.Fatal("grandfathered status must allow every module")
+	}
 }
 
 func licensePtr(l License) *License { return &l }

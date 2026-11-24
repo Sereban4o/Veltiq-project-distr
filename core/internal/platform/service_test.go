@@ -162,6 +162,27 @@ func TestModuleSetRespectsEntitlement(t *testing.T) {
 	}
 }
 
+func TestSetExtensionAllowedWhenGrandfathered(t *testing.T) {
+	// No license and grandfathering on: a module with an entitlement must still
+	// be enableable (previously it was refused as "not in the license").
+	service := newTestService(t, "", true)
+
+	if err := service.SyncExtensions([]store.Extension{
+		{ID: "crm", Tier: "vendor", Entitlement: "crm"},
+	}); err != nil {
+		t.Fatalf("sync: %v", err)
+	}
+
+	if _, err := service.SetExtension("crm", true); err != nil {
+		t.Fatalf("crm must be enableable when grandfathered: %v", err)
+	}
+
+	modules := service.Extensions()
+	if len(modules) != 1 || modules[0].ID != "crm" || !modules[0].Enabled {
+		t.Fatalf("crm must be enabled, got %+v", modules)
+	}
+}
+
 func TestStateSurvivesRestart(t *testing.T) {
 	dir := t.TempDir()
 

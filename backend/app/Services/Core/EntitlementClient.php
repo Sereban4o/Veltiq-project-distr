@@ -79,6 +79,11 @@ class EntitlementClient
     {
         $state = $this->state();
 
+        // A grandfathered install (no license file) ships fully enabled.
+        if ($state['state'] === 'grandfathered') {
+            return true;
+        }
+
         return in_array($id, $state['features'], true) || in_array($id, $state['modules'], true);
     }
 

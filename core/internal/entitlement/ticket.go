@@ -13,6 +13,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/veltiq/core/internal/license"
 )
 
 // ErrBadTicket is returned when a ticket does not verify.
@@ -126,6 +128,11 @@ func PublicKeyBase64(publicKey ed25519.PublicKey) string {
 
 // Allows reports whether the ticket grants the given feature or module id.
 func (t Ticket) Allows(id string) bool {
+	// Mirrors license.Status.Allows: a grandfathered install is fully enabled.
+	if t.State == license.StateGrandfathered {
+		return true
+	}
+
 	for _, feature := range t.Features {
 		if feature == id {
 			return true

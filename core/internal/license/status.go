@@ -143,6 +143,12 @@ func UnknownStatus(fingerprint string) Status {
 
 // Allows reports whether the status grants the given feature or module id.
 func (s Status) Allows(id string) bool {
+	// A grandfathered installation has no license file and the product ships
+	// fully enabled ("всё включено"), so every module/feature is allowed.
+	if s.State == StateGrandfathered {
+		return true
+	}
+
 	for _, f := range s.Features {
 		if f == id {
 			return true
