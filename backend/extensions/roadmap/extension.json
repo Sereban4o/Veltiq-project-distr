@@ -1,0 +1,16 @@
+{
+    "id": "roadmap",
+    "name": "Дорожная карта",
+    "version": "1.0.0",
+    "vendor": "Veltiq",
+    "tier": "vendor",
+    "requires": { "core": ">=1.0", "php": ">=8.5", "extensions": ["tasksbase"] },
+    "provider": "App\\Extensions\\Roadmap\\RoadmapModuleProvider",
+    "psr4": { "App\\Extensions\\Roadmap\\": "src/" },
+    "routes": "routes/api.php",
+    "menu": [
+        { "key": "timeline", "text": "Дорожная карта", "path": "/timeline" }
+    ],
+    "enabled": true,
+    "uninstall": "retain"
+}

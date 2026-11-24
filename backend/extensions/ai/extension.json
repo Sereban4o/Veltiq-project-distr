@@ -1,0 +1,16 @@
+{
+    "id": "ai",
+    "name": "AI-ассистент",
+    "version": "1.0.0",
+    "vendor": "Veltiq",
+    "tier": "vendor",
+    "requires": { "core": ">=1.0", "php": ">=8.5", "extensions": [] },
+    "provider": "App\\Extensions\\Ai\\AiModuleProvider",
+    "psr4": { "App\\Extensions\\Ai\\": "src/" },
+    "routes": "routes/api.php",
+    "menu": [
+        { "key": "assistant", "text": "Ассистент", "path": "/assistant" }
+    ],
+    "enabled": true,
+    "uninstall": "retain"
+}

@@ -92,8 +92,8 @@ class KnowledgebaseSearchController extends Controller
         return Page::query()
             ->where('status', 'published')
             ->where(function ($q) use ($query) {
-                $q->where('title', 'ilike', "%{$query}%")
-                    ->orWhere('body', 'ilike', "%{$query}%");
+                $q->whereLike('title', "%{$query}%")
+                    ->orWhereLike('body', "%{$query}%");
             })
             ->with('space')
             ->limit($take)

@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
-use App\Services\Storage\StorageAddress;
-use App\Services\Storage\StorageConfig;
-use App\Services\Storage\StorageDriverFactory;
-use App\Services\Storage\StorageException;
-use App\Services\Storage\StorageNotConfiguredException;
+use App\Extensions\Storage\Services\StorageAddress;
+use App\Extensions\Storage\Services\StorageConfig;
+use App\Extensions\Storage\Services\StorageDriverFactory;
+use App\Extensions\Storage\Services\StorageException;
+use App\Extensions\Storage\Services\StorageNotConfiguredException;
 use Illuminate\Http\Request;
 use InvalidArgumentException;
 use Throwable;

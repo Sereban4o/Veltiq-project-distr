@@ -7,30 +7,31 @@
 package main
 
 import (
+	"context"
 	"crypto/subtle"
 	"encoding/json"
 	"errors"
+	"io"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"strconv"
+	"syscall"
 	"time"
 
-	"github.com/veltiq/core/internal/automation"
-	"github.com/veltiq/core/internal/crm"
-	"github.com/veltiq/core/internal/csvmap"
-	"github.com/veltiq/core/internal/mailmatch"
+	"github.com/veltiq/core/internal/entitlement"
 	"github.com/veltiq/core/internal/pageacl"
 	"github.com/veltiq/core/internal/permissions"
-	"github.com/veltiq/core/internal/recurrence"
+	"github.com/veltiq/core/internal/platform"
+	"github.com/veltiq/core/internal/registry"
 	"github.com/veltiq/core/internal/searchtext"
-	"github.com/veltiq/core/internal/slots"
-	"github.com/veltiq/core/internal/sprint"
-	"github.com/veltiq/core/internal/threadkey"
-	"github.com/veltiq/core/internal/timesheet"
+	"github.com/veltiq/core/internal/store"
 )
 
 type server struct {
-	token string
+	token    string
+	platform *platform.Service
 }
 
 type freeSlotsRequest struct {
@@ -61,24 +62,27 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
-	srv := &server{token: token}
+
+	platformService := newPlatformService()
+	srv := &server{token: token, platform: platformService}
 
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
-	mux.HandleFunc("/v1/calendar/free-slots", srv.authorized(srv.freeSlots))
-	mux.HandleFunc("/v1/tasksbase/automation/match", srv.authorized(srv.automationMatch))
-	mux.HandleFunc("/v1/tasksbase/timesheet", srv.authorized(srv.timesheetBuild))
-	mux.HandleFunc("/v1/crm/automation/match", srv.authorized(srv.crmAutomationMatch))
-	mux.HandleFunc("/v1/crm/csv/mapping", srv.authorized(srv.csvMapping))
+	mux.HandleFunc("/v1/license/status", srv.authorized(srv.licenseStatus))
+	mux.HandleFunc("/v1/license/request", srv.authorized(srv.licenseRequest))
+	mux.HandleFunc("/v1/license/activate", srv.authorized(srv.licenseActivate))
+	mux.HandleFunc("/v1/license/crl", srv.authorized(srv.licenseCRL))
+	mux.HandleFunc("/v1/license/usage", srv.authorized(srv.licenseUsage))
+	mux.HandleFunc("/v1/entitlement/pubkey", srv.authorized(srv.entitlementPubKey))
+	mux.HandleFunc("/v1/entitlement/token", srv.authorized(srv.entitlementToken))
+	mux.HandleFunc("/v1/extensions", srv.authorized(srv.extensionsList))
+	mux.HandleFunc("/v1/extensions/sync", srv.authorized(srv.extensionsSync))
+	mux.HandleFunc("/v1/extensions/set", srv.authorized(srv.extensionsSet))
+	mux.HandleFunc("/v1/audit", srv.authorized(srv.auditAppend))
 	mux.HandleFunc("/v1/permissions/resolve", srv.authorized(srv.permissionResolve))
-	mux.HandleFunc("/v1/mail/rules/resolve", srv.authorized(srv.mailRulesResolve))
-	mux.HandleFunc("/v1/mail/thread/resolve", srv.authorized(srv.threadKeyResolve))
 	mux.HandleFunc("/v1/knowledgebase/page-acl/resolve", srv.authorized(srv.pageAclResolve))
-	mux.HandleFunc("/v1/calendar/expand-recurrence", srv.authorized(srv.expandRecurrence))
 	mux.HandleFunc("/v1/search/snippets", srv.authorized(srv.searchSnippets))
-	mux.HandleFunc("/v1/tasksbase/sprint/burndown", srv.authorized(srv.sprintBurndown))
-	mux.HandleFunc("/v1/tasksbase/sprint/velocity", srv.authorized(srv.sprintVelocity))
 
 	httpServer := &http.Server{
 		Addr:              addr,
@@ -88,9 +92,65 @@ func main() {
 		WriteTimeout:      30 * time.Second,
 	}
 
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	platformService.StartHeartbeat(ctx)
+
 	log.Printf("core service listening on %s", addr)
 	if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatalf("server failed: %v", err)
+	}
+}
+
+// newPlatformService assembles the licensing control plane from the environment.
+// It never fails the process: without a public key the product simply reports the
+// grandfather state, and without Postgres it falls back to file state.
+func newPlatformService() *platform.Service {
+	cfg := platform.Config{
+		StateDir:          envOr("CORE_STATE_DIR", "/var/lib/core"),
+		DatabaseURL:       os.Getenv("CORE_DATABASE_URL"),
+		PublicKeyBase64:   os.Getenv("LICENSE_PUBLIC_KEY"),
+		ClusterID:         os.Getenv("CORE_CLUSTER_ID"),
+		AllowGrandfather:  envBool("LICENSE_ALLOW_GRANDFATHER", true),
+		LicenseServerURL:  os.Getenv("LICENSE_SERVER_URL"),
+		HeartbeatInterval: time.Duration(envInt("LICENSE_HEARTBEAT_HOURS", 6)) * time.Hour,
+		AppKey:            os.Getenv("APP_KEY"),
+	}
+
+	service, err := platform.New(context.Background(), cfg)
+	if err != nil {
+		log.Fatalf("platform core failed to start: %v", err)
+	}
+
+	return service
+}
+
+func envInt(key string, fallback int) int {
+	if value := os.Getenv(key); value != "" {
+		if parsed, err := strconv.Atoi(value); err == nil {
+			return parsed
+		}
+	}
+
+	return fallback
+}
+
+func envOr(key, fallback string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+
+	return fallback
+}
+
+func envBool(key string, fallback bool) bool {
+	switch os.Getenv(key) {
+	case "1", "true", "yes":
+		return true
+	case "0", "false", "no":
+		return false
+	default:
+		return fallback
 	}
 }
 
@@ -107,145 +167,6 @@ func (s *server) authorized(next http.HandlerFunc) http.HandlerFunc {
 
 		next(w, r)
 	}
-}
-
-func (s *server) freeSlots(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
-
-		return
-	}
-
-	var payload freeSlotsRequest
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
-
-		return
-	}
-
-	windowStart, err := time.Parse(time.RFC3339, payload.WindowStart)
-	if err != nil {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": "invalid window_start"})
-
-		return
-	}
-
-	windowEnd, err := time.Parse(time.RFC3339, payload.WindowEnd)
-	if err != nil {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": "invalid window_end"})
-
-		return
-	}
-
-	if !windowEnd.After(windowStart) {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": "window_end must be after window_start"})
-
-		return
-	}
-
-	meetings := make([]slots.Meeting, 0, len(payload.Meetings))
-	for _, meeting := range payload.Meetings {
-		var start time.Time
-		if meeting.Start != nil {
-			parsed, err := time.Parse(time.RFC3339, *meeting.Start)
-			if err != nil {
-				writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": "invalid meeting start"})
-
-				return
-			}
-			start = parsed
-		}
-
-		var end *time.Time
-		if meeting.End != nil {
-			parsed, err := time.Parse(time.RFC3339, *meeting.End)
-			if err != nil {
-				writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": "invalid meeting end"})
-
-				return
-			}
-			end = &parsed
-		}
-
-		meetings = append(meetings, slots.Meeting{Start: start, End: end, AllDay: meeting.AllDay})
-	}
-
-	found := slots.Find(windowStart, windowEnd, meetings, payload.Duration)
-
-	result := make([]slotPayload, 0, len(found))
-	for _, slot := range found {
-		result = append(result, slotPayload{
-			Start: slot.Start.UTC().Format(time.RFC3339),
-			End:   slot.End.UTC().Format(time.RFC3339),
-		})
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{"slots": result})
-}
-
-func (s *server) automationMatch(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
-
-		return
-	}
-
-	var payload struct {
-		Issue   automation.Issue   `json:"issue"`
-		Context automation.Context `json:"context"`
-		Rules   []automation.Rule  `json:"rules"`
-	}
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
-
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"matches": automation.Evaluate(payload.Rules, payload.Issue, payload.Context),
-	})
-}
-
-func (s *server) timesheetBuild(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
-
-		return
-	}
-
-	var payload struct {
-		Entries []timesheet.Entry `json:"entries"`
-	}
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4<<20)).Decode(&payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
-
-		return
-	}
-
-	writeJSON(w, http.StatusOK, timesheet.Build(payload.Entries))
-}
-
-func (s *server) crmAutomationMatch(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
-
-		return
-	}
-
-	var payload struct {
-		Deal    crm.Deal    `json:"deal"`
-		Context crm.Context `json:"context"`
-		Rules   []crm.Rule  `json:"rules"`
-	}
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
-
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"matches": crm.Evaluate(payload.Rules, payload.Deal, payload.Context),
-	})
 }
 
 func (s *server) permissionResolve(w http.ResponseWriter, r *http.Request) {
@@ -271,62 +192,6 @@ func (s *server) permissionResolve(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, permissions.Resolve(request))
 }
 
-func (s *server) mailRulesResolve(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
-
-		return
-	}
-
-	var payload struct {
-		Rules   []mailmatch.Rule    `json:"rules"`
-		Message mailmatch.Message  `json:"message"`
-	}
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4<<20)).Decode(&payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
-
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"rule_id": mailmatch.Resolve(payload.Rules, payload.Message),
-	})
-}
-
-func (s *server) threadKeyResolve(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
-
-		return
-	}
-
-	var request threadkey.Request
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&request); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
-
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{"thread_key": threadkey.Compute(request)})
-}
-
-func (s *server) csvMapping(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
-
-		return
-	}
-
-	var request csvmap.Request
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4<<20)).Decode(&request); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
-
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{"index": csvmap.Resolve(request)})
-}
-
 func (s *server) pageAclResolve(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
@@ -342,87 +207,6 @@ func (s *server) pageAclResolve(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{"permission": pageacl.Resolve(request)})
-}
-
-func (s *server) expandRecurrence(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
-
-		return
-	}
-
-	var payload struct {
-		Start    string   `json:"start"`
-		Duration int      `json:"duration_seconds"`
-		Rrule    string   `json:"rrule"`
-		Exdates  []string `json:"exdates"`
-		From     string   `json:"from"`
-		To       string   `json:"to"`
-		Limit    int      `json:"limit"`
-		Timezone string   `json:"timezone"`
-	}
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
-
-		return
-	}
-
-	parse := func(value string) (time.Time, bool) {
-		parsed, err := time.Parse(time.RFC3339, value)
-
-		return parsed, err == nil
-	}
-
-	start, ok := parse(payload.Start)
-	from, okFrom := parse(payload.From)
-	to, okTo := parse(payload.To)
-	if !ok || !okFrom || !okTo {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": "invalid timestamps"})
-
-		return
-	}
-
-	exdates := make([]time.Time, 0, len(payload.Exdates))
-	for _, value := range payload.Exdates {
-		if parsed, parsedOK := parse(value); parsedOK {
-			exdates = append(exdates, parsed)
-		}
-	}
-
-	result, err := recurrence.Expand(recurrence.Request{
-		Start:    start,
-		Duration: time.Duration(payload.Duration) * time.Second,
-		Rrule:    payload.Rrule,
-		Exdates:  exdates,
-		From:     from,
-		To:       to,
-		Limit:    payload.Limit,
-		Timezone: payload.Timezone,
-	})
-
-	var unsupported *recurrence.UnsupportedError
-	if errors.As(err, &unsupported) {
-		// The caller keeps its own engine; a distinct status avoids caching a
-		// "successful" empty result.
-		writeJSON(w, http.StatusNotImplemented, map[string]string{"error": unsupported.Error()})
-
-		return
-	}
-	if err != nil {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": err.Error()})
-
-		return
-	}
-
-	items := make([]slotPayload, 0, len(result.Items))
-	for _, item := range result.Items {
-		items = append(items, slotPayload{
-			Start: item.Start.UTC().Format(time.RFC3339),
-			End:   item.End.UTC().Format(time.RFC3339),
-		})
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{"items": items, "truncated": result.Truncated})
 }
 
 func (s *server) searchSnippets(w http.ResponseWriter, r *http.Request) {
@@ -461,64 +245,6 @@ func (s *server) searchSnippets(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (s *server) sprintBurndown(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
-
-		return
-	}
-
-	var payload struct {
-		StartDate   string            `json:"start_date"`
-		EndDate     string            `json:"end_date"`
-		TotalPoints float64           `json:"total_points"`
-		Snapshots   []sprint.Snapshot `json:"snapshots"`
-	}
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
-
-		return
-	}
-
-	if _, err := time.Parse("2006-01-02", payload.StartDate); err != nil {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": "invalid start_date"})
-
-		return
-	}
-
-	if _, err := time.Parse("2006-01-02", payload.EndDate); err != nil {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": "invalid end_date"})
-
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"total_points": payload.TotalPoints,
-		"series":       sprint.Build(payload.StartDate, payload.EndDate, payload.TotalPoints, payload.Snapshots),
-	})
-}
-
-func (s *server) sprintVelocity(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
-
-		return
-	}
-
-	var payload struct {
-		CompletedPoints []float64 `json:"completed_points"`
-	}
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20)).Decode(&payload); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
-
-		return
-	}
-
-	writeJSON(w, http.StatusOK, map[string]any{
-		"average": sprint.VelocityAverage(payload.CompletedPoints),
-	})
-}
-
 func writeJSON(w http.ResponseWriter, status int, body any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
@@ -526,4 +252,276 @@ func writeJSON(w http.ResponseWriter, status int, body any) {
 	if err := json.NewEncoder(w).Encode(body); err != nil {
 		log.Printf("write response: %v", err)
 	}
+}
+
+// ── Licensing control plane ────────────────────────────────────────────────
+
+func (s *server) licenseStatus(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"fingerprint":  s.platform.Fingerprint(),
+		"status":       s.platform.Status(),
+		"clock_tamper": s.platform.ClockTamper(),
+		"revoked":      s.platform.Revoked(),
+		"active_users": s.platform.ActiveUsers(),
+	})
+}
+
+func (s *server) licenseRequest(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost && r.Method != http.MethodGet {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+
+		return
+	}
+
+	code, err := s.platform.RequestCode()
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "cannot build request code"})
+
+		return
+	}
+
+	writeJSON(w, http.StatusOK, code)
+}
+
+func (s *server) licenseActivate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+
+		return
+	}
+
+	body, ok := readBody(w, r, 1<<20)
+	if !ok {
+		return
+	}
+
+	status, err := s.platform.Activate(body)
+	if err != nil {
+		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": err.Error()})
+
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{"status": status})
+}
+
+func (s *server) licenseCRL(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+
+		return
+	}
+
+	body, ok := readBody(w, r, 4<<20)
+	if !ok {
+		return
+	}
+
+	if err := s.platform.ApplyCRL(body); err != nil {
+		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": err.Error()})
+
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+func (s *server) entitlementPubKey(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{
+		"public_key": entitlement.PublicKeyBase64(s.platform.TicketKey()),
+	})
+}
+
+func (s *server) entitlementToken(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+
+		return
+	}
+
+	token, err := s.platform.Ticket()
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "cannot issue ticket"})
+
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"token": token})
+}
+
+func (s *server) extensionsList(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+
+		return
+	}
+
+	extensions := s.platform.Extensions()
+	writeJSON(w, http.StatusOK, map[string]any{
+		"extensions": extensions,
+		"enabled":    registry.EnabledIDs(extensions),
+	})
+}
+
+func (s *server) extensionsSync(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+
+		return
+	}
+
+	body, ok := readBody(w, r, 4<<20)
+	if !ok {
+		return
+	}
+
+	var payload struct {
+		Extensions []store.Extension `json:"extensions"`
+	}
+
+	if err := json.Unmarshal(body, &payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
+
+		return
+	}
+
+	if err := s.platform.SyncExtensions(payload.Extensions); err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+
+		return
+	}
+
+	extensions := s.platform.Extensions()
+	writeJSON(w, http.StatusOK, map[string]any{
+		"extensions": extensions,
+		"enabled":    registry.EnabledIDs(extensions),
+	})
+}
+
+func (s *server) extensionsSet(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+
+		return
+	}
+
+	body, ok := readBody(w, r, 1<<20)
+	if !ok {
+		return
+	}
+
+	var payload struct {
+		ID      string `json:"id"`
+		Enabled bool   `json:"enabled"`
+	}
+
+	if err := json.Unmarshal(body, &payload); err != nil || payload.ID == "" {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "id is required"})
+
+		return
+	}
+
+	extensions, err := s.platform.SetExtension(payload.ID, payload.Enabled)
+	if err != nil {
+		writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{
+		"extensions": extensions,
+		"enabled":    registry.EnabledIDs(extensions),
+	})
+}
+
+// licenseUsage stores the active-user figure the application reports; the core
+// sends it in the heartbeat to the vendor server.
+func (s *server) licenseUsage(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+
+		return
+	}
+
+	body, ok := readBody(w, r, 1<<16)
+	if !ok {
+		return
+	}
+
+	var payload struct {
+		ActiveUsers int `json:"active_users"`
+	}
+
+	if err := json.Unmarshal(body, &payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
+
+		return
+	}
+
+	if err := s.platform.SetActiveUsers(payload.ActiveUsers); err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+// auditAppend records an application-side action (module install/uninstall) in
+// the core audit trail.
+func (s *server) auditAppend(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "method not allowed"})
+
+		return
+	}
+
+	body, ok := readBody(w, r, 1<<20)
+	if !ok {
+		return
+	}
+
+	var payload struct {
+		Action string `json:"action"`
+		Detail string `json:"detail"`
+		Actor  string `json:"actor"`
+	}
+
+	if err := json.Unmarshal(body, &payload); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON"})
+
+		return
+	}
+
+	if err := s.platform.Audit(payload.Action, payload.Detail, payload.Actor); err != nil {
+		writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": err.Error()})
+
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
+// readBody reads a bounded request body, answering 400 on failure.
+func readBody(w http.ResponseWriter, r *http.Request, limit int64) ([]byte, bool) {
+	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, limit))
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "cannot read body"})
+
+		return nil, false
+	}
+
+	return body, true
 }

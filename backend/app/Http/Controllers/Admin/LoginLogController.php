@@ -95,7 +95,7 @@ class LoginLogController extends Controller
     {
         return LoginLog::query()
             ->when($filters['user_id'], fn ($q, $userId) => $q->where('user_id', $userId))
-            ->when($filters['email'], fn ($q, $email) => $q->where('email', 'ilike', "%{$email}%"))
+            ->when($filters['email'], fn ($q, $email) => $q->whereLike('email', "%{$email}%"))
             ->when($filters['event'], fn ($q, $event) => $q->where('event', $event))
             ->when($filters['channel'], fn ($q, $channel) => $q->where('channel', $channel))
             ->when($filters['successful'] !== null, fn ($q) => $q->where('successful', $filters['successful']))

@@ -1,0 +1,32 @@
+# Edition overlay: strict licensing (LICENSE_ENFORCE).
+#
+# Without it the stack runs in "наблюдение" mode: the license state is shown but
+# nothing is blocked, and an unlicensed installation is treated as grandfathered
+# (docs/12-licensing.md). With this overlay enabled:
+#
+#   * the application API answers 403 `license_required` when there is no license
+#     (admin panel, login, branding and license endpoints stay reachable);
+#   * an expired license degrades to read-only (`license_read_only`);
+#   * the core stops grandfathering, so the state is real.
+#
+# Usage:
+#   docker compose --env-file backend/.env.production \
+#     -f docker-compose.prod.yml -f docker-compose.enforce.yml up -d
+
+services:
+  app:
+    environment:
+      - LICENSE_ENFORCE=true
+
+  worker:
+    environment:
+      - LICENSE_ENFORCE=true
+
+  scheduler:
+    environment:
+      - LICENSE_ENFORCE=true
+
+  core:
+    environment:
+      - LICENSE_ENFORCE=true
+      - LICENSE_ALLOW_GRANDFATHER=false

@@ -1,0 +1,17 @@
+{
+    "id": "mail",
+    "name": "Почта",
+    "version": "1.0.0",
+    "vendor": "Veltiq",
+    "tier": "vendor",
+    "requires": { "core": ">=1.0", "php": ">=8.5", "extensions": [] },
+    "provider": "App\\Extensions\\Mail\\MailModuleProvider",
+    "psr4": { "App\\Extensions\\Mail\\": "src/" },
+    "routes": "routes/api.php",
+    "migrations": "database/migrations",
+    "menu": [
+        { "key": "mail", "text": "Почта", "path": "/mail" }
+    ],
+    "enabled": true,
+    "uninstall": "retain"
+}

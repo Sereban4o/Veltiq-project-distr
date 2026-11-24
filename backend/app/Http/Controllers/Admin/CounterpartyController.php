@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\SyncCounterpartiesFrom1C;
-use App\Models\Crm\Company;
 use App\Models\Setting;
+use App\Extensions\Crm\Models\Company;
 use App\Services\Integration\OneC\CounterpartyConfig;
 use App\Services\Integration\OneC\CounterpartySyncService;
 use Illuminate\Http\Request;
@@ -26,9 +26,9 @@ class CounterpartyController extends Controller
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'ilike', "%{$search}%")
-                    ->orWhere('full_name', 'ilike', "%{$search}%")
-                    ->orWhere('inn', 'ilike', "%{$search}%");
+                $q->whereLike('name', "%{$search}%")
+                    ->orWhereLike('full_name', "%{$search}%")
+                    ->orWhereLike('inn', "%{$search}%");
             });
         }
 

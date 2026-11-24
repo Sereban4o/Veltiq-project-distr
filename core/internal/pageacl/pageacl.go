@@ -30,7 +30,7 @@ func Resolve(request Request) string {
 	}
 
 	for _, link := range request.Chain {
-		if ! link.HasGrants {
+		if !link.HasGrants {
 			continue
 		}
 

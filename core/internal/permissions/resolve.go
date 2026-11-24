@@ -8,15 +8,15 @@ package permissions
 
 // Request carries the pre-computed inputs of one decision.
 type Request struct {
-	Permission     string   `json:"permission"`
-	IsGlobalScope  bool     `json:"is_global_scope"`
-	GlobalRole     *string  `json:"global_role"`
-	ScopeRole      *string  `json:"scope_role"`
-	ScopeDenies    bool     `json:"scope_denies"`
-	ScopeAllows    bool     `json:"scope_allows"`
-	GlobalDenies   bool     `json:"global_denies"`
-	GlobalAllows   bool     `json:"global_allows"`
-	Baseline       []string `json:"baseline"`
+	Permission      string   `json:"permission"`
+	IsGlobalScope   bool     `json:"is_global_scope"`
+	GlobalRole      *string  `json:"global_role"`
+	ScopeRole       *string  `json:"scope_role"`
+	ScopeDenies     bool     `json:"scope_denies"`
+	ScopeAllows     bool     `json:"scope_allows"`
+	GlobalDenies    bool     `json:"global_denies"`
+	GlobalAllows    bool     `json:"global_allows"`
+	Baseline        []string `json:"baseline"`
 	RolePermissions []string `json:"role_permissions"`
 }
 

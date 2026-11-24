@@ -1,0 +1,18 @@
+{
+    "id": "calendar",
+    "name": "Календарь",
+    "version": "1.0.0",
+    "vendor": "Veltiq",
+    "tier": "vendor",
+    "requires": { "core": ">=1.0", "php": ">=8.5", "extensions": ["tasksbase"] },
+    "provider": "App\\Extensions\\Calendar\\CalendarModuleProvider",
+    "psr4": { "App\\Extensions\\Calendar\\": "src/" },
+    "routes": "routes/api.php",
+    "migrations": "database/migrations",
+    "menu": [
+        { "key": "calendar", "text": "Календарь", "path": "/calendar", "permission": "calendar.view" }
+    ],
+    "permissions": ["calendar.view"],
+    "enabled": true,
+    "uninstall": "retain"
+}

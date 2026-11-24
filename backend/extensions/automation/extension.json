@@ -1,0 +1,17 @@
+{
+    "id": "automation",
+    "name": "Автоматизация",
+    "version": "1.0.0",
+    "vendor": "Veltiq",
+    "tier": "vendor",
+    "requires": { "core": ">=1.0", "php": ">=8.5", "extensions": ["tasksbase"] },
+    "provider": "App\\Extensions\\Automation\\AutomationModuleProvider",
+    "psr4": { "App\\Extensions\\Automation\\": "src/" },
+    "routes": "routes/api.php",
+    "migrations": "database/migrations",
+    "menu": [
+        { "key": "automations", "text": "Автоматизации", "path": "/automations" }
+    ],
+    "enabled": true,
+    "uninstall": "retain"
+}

@@ -48,6 +48,12 @@ class PermissionSeeder extends Seeder
             // Admin permissions
             ['name' => 'manage_users', 'group' => 'admin'],
             ['name' => 'manage_settings', 'group' => 'admin'],
+
+            // Module permissions (declared by module manifests, docs/11-extensions.md)
+            ['name' => 'calendar.view', 'group' => 'calendar'],
+            ['name' => 'calendar.manage', 'group' => 'calendar'],
+            ['name' => 'crm.view', 'group' => 'crm'],
+            ['name' => 'crm.manage', 'group' => 'crm'],
         ];
 
         foreach ($permissions as $permission) {
@@ -75,9 +81,9 @@ class PermissionSeeder extends Seeder
         // Assign permissions to roles
         $rolePermissions = [
             'admin' => 'all',
-            'member' => ['view_projects', 'create_issues', 'edit_issues', 'view_issues', 'transition_issues', 'view_boards', 'edit_boards', 'view_spaces', 'create_pages', 'edit_pages', 'view_pages', 'publish_pages'],
-            'reporter' => ['view_projects', 'create_issues', 'view_issues', 'view_spaces', 'create_pages', 'view_pages'],
-            'viewer' => ['view_projects', 'view_issues', 'view_spaces', 'view_pages'],
+            'member' => ['view_projects', 'create_issues', 'edit_issues', 'view_issues', 'transition_issues', 'view_boards', 'edit_boards', 'view_spaces', 'create_pages', 'edit_pages', 'view_pages', 'publish_pages', 'calendar.view', 'crm.view'],
+            'reporter' => ['view_projects', 'create_issues', 'view_issues', 'view_spaces', 'create_pages', 'view_pages', 'calendar.view'],
+            'viewer' => ['view_projects', 'view_issues', 'view_spaces', 'view_pages', 'calendar.view'],
         ];
 
         $permIds = DB::table('permissions')->pluck('id', 'name')->toArray();

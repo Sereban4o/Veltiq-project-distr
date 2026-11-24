@@ -1,9 +1,9 @@
 <?php
 
-use App\Jobs\PruneStorageAudit;
-use App\Jobs\PruneStorageTrash;
-use App\Jobs\PruneStorageUploads;
-use App\Jobs\PruneStorageVersions;
+use App\Extensions\Storage\Jobs\PruneStorageAudit;
+use App\Extensions\Storage\Jobs\PruneStorageTrash;
+use App\Extensions\Storage\Jobs\PruneStorageUploads;
+use App\Extensions\Storage\Jobs\PruneStorageVersions;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schedule;
 
@@ -27,12 +27,14 @@ Schedule::call(fn () => Cache::forever('scheduler:heartbeat', now()->toIso8601St
 
 Schedule::command('one-c:pull-issues')->hourly()->withoutOverlapping(120);
 Schedule::command('sprints:snapshot')->dailyAt('23:50')->withoutOverlapping(60);
-Schedule::command('calendar:sync-feeds')->hourly()->withoutOverlapping(60);
-Schedule::command('storage:previews --missing --limit=200')->everyThirtyMinutes()->withoutOverlapping(60);
-Schedule::job(new PruneStorageVersions())->dailyAt('03:00')->withoutOverlapping(60);
-Schedule::job(new PruneStorageTrash())->dailyAt('03:10')->withoutOverlapping(60);
-Schedule::job(new PruneStorageUploads())->hourly()->withoutOverlapping(60);
-Schedule::job(new PruneStorageAudit())->dailyAt('03:20')->withoutOverlapping(60);
+// Calendar feeds are part of the `calendar` module: skip while it is disabled.
+Schedule::command('calendar:sync-feeds')->hourly()->withoutOverlapping(60)
+    ->when(fn () => app(\App\Services\Extensions\ExtensionRegistry::class)->isEnabled('calendar'));
+Schedule::command('storage:previews --missing --limit=200')->everyThirtyMinutes()->withoutOverlapping(60)->when(fn () => app(\App\Services\Extensions\ExtensionRegistry::class)->isEnabled('storage'));
+Schedule::job(new PruneStorageVersions())->dailyAt('03:00')->withoutOverlapping(60)->when(fn () => app(\App\Services\Extensions\ExtensionRegistry::class)->isEnabled('storage'));
+Schedule::job(new PruneStorageTrash())->dailyAt('03:10')->withoutOverlapping(60)->when(fn () => app(\App\Services\Extensions\ExtensionRegistry::class)->isEnabled('storage'));
+Schedule::job(new PruneStorageUploads())->hourly()->withoutOverlapping(60)->when(fn () => app(\App\Services\Extensions\ExtensionRegistry::class)->isEnabled('storage'));
+Schedule::job(new PruneStorageAudit())->dailyAt('03:20')->withoutOverlapping(60)->when(fn () => app(\App\Services\Extensions\ExtensionRegistry::class)->isEnabled('storage'));
 Schedule::command('audit:prune')->dailyAt('03:30')->withoutOverlapping(60);
 Schedule::command('login-logs:prune')->dailyAt('03:40')->withoutOverlapping(60);
 Schedule::command('notifications:prune')->dailyAt('03:50')->withoutOverlapping(60);
@@ -60,3 +62,7 @@ Schedule::command('search:reindex-if-stale')->everyFiveMinutes()->withoutOverlap
 
 // Horizon metrics snapshots — without this the dashboard graphs stay empty.
 Schedule::command('horizon:snapshot')->everyFiveMinutes()->withoutOverlapping(10);
+
+// Report the active-user count to the compiled core, which forwards it in the
+// license heartbeat (docs/12-licensing.md). No-op when the core is disabled.
+Schedule::command('license:usage')->hourly()->withoutOverlapping(30);

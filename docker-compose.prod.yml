@@ -226,6 +226,8 @@ services:
 
   # Compiled "protected core" service (Go). Internal only: no published ports,
   # every request authenticated with CORE_TOKEN from backend/.env.production.
+  # Owns licensing and the module registry; keeps its state in its OWN Postgres
+  # tables (core_*) and the `core_data` volume holds the ticket keypair.
   core:
     build:
       context: ./core
@@ -234,6 +236,17 @@ services:
       - ./backend/.env.production
     environment:
       - CORE_TOKEN=${CORE_TOKEN:?set CORE_TOKEN in backend/.env.production}
+      - CORE_STATE_DIR=/var/lib/core
+      - CORE_DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-tasksbase}?sslmode=disable
+      - LICENSE_PUBLIC_KEY=${LICENSE_PUBLIC_KEY:-}
+      - LICENSE_ALLOW_GRANDFATHER=${LICENSE_ALLOW_GRANDFATHER:-true}
+      - LICENSE_SERVER_URL=${LICENSE_SERVER_URL:-}
+      - LICENSE_HEARTBEAT_HOURS=${LICENSE_HEARTBEAT_HOURS:-6}
+    volumes:
+      - core_data:/var/lib/core
+    depends_on:
+      postgres:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/healthz >/dev/null || exit 1"]
       interval: 30s
@@ -278,3 +291,4 @@ volumes:
   meilisearchdata:
   storage_data:
   ntfydata:
+  core_data:

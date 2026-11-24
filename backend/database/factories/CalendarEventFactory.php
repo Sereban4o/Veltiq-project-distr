@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Models\CalendarEvent;
 use App\Models\User;
+use App\Extensions\Calendar\Models\CalendarEvent;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**

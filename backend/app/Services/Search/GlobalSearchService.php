@@ -67,8 +67,8 @@ class GlobalSearchService
             $window,
             fn () => Issue::query()
                 ->where(function ($q) use ($query) {
-                    $q->where('summary', 'ilike', "%{$query}%")
-                        ->orWhere('description', 'ilike', "%{$query}%");
+                    $q->whereLike('summary', "%{$query}%")
+                        ->orWhereLike('description', "%{$query}%");
                 })
                 ->orderByDesc('updated_at')
                 ->limit($window)
@@ -121,8 +121,8 @@ class GlobalSearchService
             fn () => Page::query()
                 ->where('status', 'published')
                 ->where(function ($q) use ($query) {
-                    $q->where('title', 'ilike', "%{$query}%")
-                        ->orWhere('body', 'ilike', "%{$query}%");
+                    $q->whereLike('title', "%{$query}%")
+                        ->orWhereLike('body', "%{$query}%");
                 })
                 ->orderByDesc('updated_at')
                 ->limit($window)
@@ -181,8 +181,8 @@ class GlobalSearchService
             $window,
             fn () => File::query()
                 ->where(function ($q) use ($query) {
-                    $q->where('original_name', 'ilike', "%{$query}%")
-                        ->orWhere('mime_type', 'ilike', "%{$query}%");
+                    $q->whereLike('original_name', "%{$query}%")
+                        ->orWhereLike('mime_type', "%{$query}%");
                 })
                 ->orderByDesc('created_at')
                 ->limit($window)
@@ -242,9 +242,9 @@ class GlobalSearchService
             fn () => MailMessage::query()
                 ->where('user_id', $user->id)
                 ->where(function ($q) use ($query) {
-                    $q->where('subject', 'ilike', "%{$query}%")
-                        ->orWhere('body_text', 'ilike', "%{$query}%")
-                        ->orWhere('preview', 'ilike', "%{$query}%");
+                    $q->whereLike('subject', "%{$query}%")
+                        ->orWhereLike('body_text', "%{$query}%")
+                        ->orWhereLike('preview', "%{$query}%");
                 })
                 ->orderByDesc('received_at')
                 ->limit($window)

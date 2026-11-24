@@ -12,10 +12,10 @@ class BoardSeeder extends Seeder
 {
     public function run(): void
     {
-        $admin = User::where('email', 'admin@example.com')->first();
+        $admin = User::whereHas('role', fn ($query) => $query->where('name', 'admin'))->first();
 
         if (! $admin) {
-            $this->command?->warn('Admin user not found. Run UserSeeder first.');
+            $this->command?->warn('No administrator yet; skipping the demo board.');
 
             return;
         }

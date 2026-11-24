@@ -71,56 +71,6 @@ class CoreClient
      * @param  array<int, array{0: CarbonImmutable, 1: CarbonImmutable}>  $busy
      * @return array<int, array{start: string, end: string}>|null null → caller falls back to PHP
      */
-    public function freeSlots(
-        CarbonImmutable $windowStart,
-        CarbonImmutable $windowEnd,
-        array $busy,
-        int $durationMinutes,
-    ): ?array {
-        $response = $this->post('free_slots', '/v1/calendar/free-slots', [
-            'window_start' => $windowStart->toIso8601String(),
-            'window_end' => $windowEnd->toIso8601String(),
-            'duration' => $durationMinutes,
-            'meetings' => array_map(fn (array $interval) => [
-                'start' => $interval[0]->toIso8601String(),
-                'end' => $interval[1]->toIso8601String(),
-            ], $busy),
-        ]);
-
-        if ($response === null) {
-            return null;
-        }
-
-        $slots = $response->json('slots');
-        if (! is_array($slots)) {
-            $this->fallback('free_slots', 'invalid_response');
-
-            return null;
-        }
-
-        $result = [];
-        foreach ($slots as $slot) {
-            $start = is_array($slot) ? ($slot['start'] ?? null) : null;
-            $end = is_array($slot) ? ($slot['end'] ?? null) : null;
-
-            if (! is_string($start) || ! is_string($end)) {
-                continue;
-            }
-
-            try {
-                // Normalise to the same ISO-8601 shape the PHP path returns, so
-                // the API contract does not depend on the implementation.
-                $result[] = [
-                    'start' => CarbonImmutable::parse($start)->toIso8601String(),
-                    'end' => CarbonImmutable::parse($end)->toIso8601String(),
-                ];
-            } catch (Throwable) {
-                continue;
-            }
-        }
-
-        return $result;
-    }
 
     /**
      * Decide which automation rules fire for an issue.
@@ -130,41 +80,6 @@ class CoreClient
      * @param  array<string, mixed>  $context
      * @return array<int, array{rule_id: int, actions: array<int, array<string, mixed>>}>|null null → caller matches locally
      */
-    public function automationMatches(array $rules, array $issue, array $context): ?array
-    {
-        $response = $this->post('automation', '/v1/tasksbase/automation/match', [
-            'rules' => array_values($rules),
-            'issue' => $issue,
-            'context' => $context,
-        ]);
-
-        if ($response === null) {
-            return null;
-        }
-
-        $matches = $response->json('matches');
-        if (! is_array($matches)) {
-            $this->fallback('automation', 'invalid_response');
-
-            return null;
-        }
-
-        $result = [];
-        foreach ($matches as $match) {
-            if (! is_array($match) || ! isset($match['rule_id'])) {
-                continue;
-            }
-
-            $actions = is_array($match['actions'] ?? null) ? $match['actions'] : [];
-
-            $result[] = [
-                'rule_id' => (int) $match['rule_id'],
-                'actions' => array_values(array_filter($actions, 'is_array')),
-            ];
-        }
-
-        return $result;
-    }
 
     /**
      * Aggregate worklog entries into a per-day report.
@@ -172,27 +87,6 @@ class CoreClient
      * @param  array<int, array<string, mixed>>  $entries
      * @return array{total_seconds:int,total_hours:float,days:array<int,array<string,mixed>>}|null null → caller aggregates in PHP
      */
-    public function timesheet(array $entries): ?array
-    {
-        $response = $this->post('timesheet', '/v1/tasksbase/timesheet', ['entries' => array_values($entries)]);
-
-        if ($response === null) {
-            return null;
-        }
-
-        $days = $response->json('days');
-        if (! is_array($days)) {
-            $this->fallback('timesheet', 'invalid_response');
-
-            return null;
-        }
-
-        return [
-            'total_seconds' => (int) $response->json('total_seconds'),
-            'total_hours' => (float) $response->json('total_hours'),
-            'days' => array_values(array_filter($days, 'is_array')),
-        ];
-    }
 
     /**
      * Which CRM automation rules fire for a deal.
@@ -202,40 +96,6 @@ class CoreClient
      * @param  array<string, mixed>  $context
      * @return array<int, array{rule_id:int,action:string,action_payload:array<string,mixed>}>|null null → caller matches locally
      */
-    public function crmAutomationMatches(array $rules, array $deal, array $context): ?array
-    {
-        $response = $this->post('crm_automation', '/v1/crm/automation/match', [
-            'rules' => array_values($rules),
-            'deal' => $deal,
-            'context' => $context,
-        ]);
-
-        if ($response === null) {
-            return null;
-        }
-
-        $matches = $response->json('matches');
-        if (! is_array($matches)) {
-            $this->fallback('crm_automation', 'invalid_response');
-
-            return null;
-        }
-
-        $result = [];
-        foreach ($matches as $match) {
-            if (! is_array($match) || ! isset($match['rule_id'])) {
-                continue;
-            }
-
-            $result[] = [
-                'rule_id' => (int) $match['rule_id'],
-                'action' => (string) ($match['action'] ?? ''),
-                'action_payload' => is_array($match['action_payload'] ?? null) ? $match['action_payload'] : [],
-            ];
-        }
-
-        return $result;
-    }
 
     /**
      * Permission decision (deny/allow order, scope chain, baseline, role).
@@ -270,21 +130,6 @@ class CoreClient
      * @param  array<string, mixed>  $message
      * @return int|null|false Rule id, null when nothing matched, false → caller decides locally
      */
-    public function mailRuleResolve(array $rules, array $message): int|null|false
-    {
-        $response = $this->post('mail_rules', '/v1/mail/rules/resolve', [
-            'rules' => array_values($rules),
-            'message' => $message,
-        ]);
-
-        if ($response === null) {
-            return false;
-        }
-
-        $ruleId = $response->json('rule_id');
-
-        return is_int($ruleId) || is_numeric($ruleId) ? (int) $ruleId : null;
-    }
 
     /**
      * Expand an RRULE into concrete occurrences.
@@ -292,52 +137,6 @@ class CoreClient
      * @param  array<int, string>  $exdates
      * @return array{items:array<int,array{start:string,end:string}>,truncated:bool}|false false → caller expands locally
      */
-    public function expandRecurrence(
-        string $start,
-        int $durationSeconds,
-        string $rrule,
-        array $exdates,
-        string $from,
-        string $to,
-        int $limit,
-        string $timezone,
-    ): array|false {
-        $response = $this->post('recurrence', '/v1/calendar/expand-recurrence', [
-            'start' => $start,
-            'duration_seconds' => $durationSeconds,
-            'rrule' => $rrule,
-            'exdates' => array_values($exdates),
-            'from' => $from,
-            'to' => $to,
-            'limit' => $limit,
-            'timezone' => $timezone,
-        ]);
-
-        // 501 marks an RRULE the compiled engine does not implement; open-breaker
-        // and transport failures also end up here and keep the local engine.
-        if ($response === null || $response->status() === 501) {
-            return false;
-        }
-
-        $items = $response->json('items');
-        if (! is_array($items)) {
-            $this->fallback('recurrence', 'invalid_response');
-
-            return false;
-        }
-
-        $result = [];
-        foreach ($items as $item) {
-            $itemStart = is_array($item) ? ($item['start'] ?? null) : null;
-            $itemEnd = is_array($item) ? ($item['end'] ?? null) : null;
-
-            if (is_string($itemStart) && is_string($itemEnd)) {
-                $result[] = ['start' => $itemStart, 'end' => $itemEnd];
-            }
-        }
-
-        return ['items' => $result, 'truncated' => (bool) $response->json('truncated')];
-    }
 
     /**
      * Batch snippet generation for search results.
@@ -406,46 +205,6 @@ class CoreClient
      * @param  array<int, array<string, mixed>>  $snapshots
      * @return array{total_points:float,series:array<int,array<string,mixed>>}|null null → caller builds the series in PHP
      */
-    public function sprintBurndown(string $startDate, string $endDate, float $totalPoints, array $snapshots): ?array
-    {
-        $response = $this->post('sprint_burndown', '/v1/tasksbase/sprint/burndown', [
-            'start_date' => $startDate,
-            'end_date' => $endDate,
-            'total_points' => $totalPoints,
-            'snapshots' => array_values($snapshots),
-        ]);
-
-        if ($response === null) {
-            return null;
-        }
-
-        $series = $response->json('series');
-        if (! is_array($series)) {
-            $this->fallback('sprint_burndown', 'invalid_response');
-
-            return null;
-        }
-
-        $result = [];
-        foreach ($series as $point) {
-            if (! is_array($point) || ! isset($point['date'])) {
-                continue;
-            }
-
-            $result[] = [
-                'date' => (string) $point['date'],
-                'ideal' => (float) ($point['ideal'] ?? 0),
-                'remaining' => is_numeric($point['remaining'] ?? null) ? (float) $point['remaining'] : null,
-                'issues_total' => is_numeric($point['issues_total'] ?? null) ? (int) $point['issues_total'] : null,
-                'issues_done' => is_numeric($point['issues_done'] ?? null) ? (int) $point['issues_done'] : null,
-            ];
-        }
-
-        return [
-            'total_points' => (float) $response->json('total_points', $totalPoints),
-            'series' => $result,
-        ];
-    }
 
     /**
      * Average completed points across finished sprints.
@@ -453,24 +212,6 @@ class CoreClient
      * @param  array<int, float|int>  $completedPoints
      * @return float|null null → caller averages in PHP
      */
-    public function sprintVelocityAverage(array $completedPoints): ?float
-    {
-        $response = $this->post('sprint_velocity', '/v1/tasksbase/sprint/velocity', [
-            'completed_points' => array_map('floatval', array_values($completedPoints)),
-        ]);
-
-        if ($response === null) {
-            return null;
-        }
-
-        if (! is_numeric($response->json('average'))) {
-            $this->fallback('sprint_velocity', 'invalid_response');
-
-            return null;
-        }
-
-        return (float) $response->json('average');
-    }
 
     /**
      * Resolve CRM CSV column mappings (explicit indexes/names plus auto-map by
@@ -481,34 +222,6 @@ class CoreClient
      * @param  array<string, mixed>  $mapping
      * @return array<string, int>|null null → caller resolves in PHP
      */
-    public function csvMapping(array $header, array $labels, array $mapping): ?array
-    {
-        $response = $this->post('csv_mapping', '/v1/crm/csv/mapping', [
-            'header' => array_values($header),
-            'labels' => (object) $labels,
-            'mapping' => (object) $mapping,
-        ]);
-
-        if ($response === null) {
-            return null;
-        }
-
-        $index = $response->json('index');
-        if (! is_array($index)) {
-            $this->fallback('csv_mapping', 'invalid_response');
-
-            return null;
-        }
-
-        $result = [];
-        foreach ($index as $field => $position) {
-            if (is_string($field) && is_numeric($position)) {
-                $result[$field] = (int) $position;
-            }
-        }
-
-        return $result;
-    }
 
     /**
      * Conversation key for a mail message (subject already normalised by the
@@ -516,27 +229,6 @@ class CoreClient
      *
      * @return string|null 40-char sha1 (or the given parent key), null → caller computes in PHP
      */
-    public function threadKey(?string $parentKey, ?string $messageId, string $normalizedSubject): ?string
-    {
-        $response = $this->post('thread_key', '/v1/mail/thread/resolve', [
-            'parent_key' => $parentKey,
-            'message_id' => $messageId,
-            'normalized_subject' => $normalizedSubject,
-        ]);
-
-        if ($response === null) {
-            return null;
-        }
-
-        $key = $response->json('thread_key');
-        if (! is_string($key) || preg_match('/^[a-f0-9]{40}$/', $key) !== 1) {
-            $this->fallback('thread_key', 'invalid_response');
-
-            return null;
-        }
-
-        return $key;
-    }
 
     /**
      * Effective page permission for a user (nearest restricted ancestor wins,
@@ -566,6 +258,120 @@ class CoreClient
         }
 
         return (string) $permission;
+    }
+
+    /**
+     * Control-plane call (licensing and modules).
+     *
+     * Unlike the algorithm calls this never silently falls back: the caller must
+     * surface the real state, so transport failures and rejections are returned
+     * as a result array instead of being swallowed.
+     *
+     * @param  array<string, mixed>  $payload
+     * @return array{ok: bool, status: int, data: array<string, mixed>}
+     */
+    public function control(string $method, string $path, array $payload = [], ?string $rawBody = null): array
+    {
+        if (! $this->enabled()) {
+            return ['ok' => false, 'status' => 0, 'data' => ['error' => 'core_disabled']];
+        }
+
+        try {
+            $options = $rawBody !== null ? ['body' => $rawBody] : ['json' => $payload];
+
+            $response = Http::timeout(max(1, (int) config('core.timeout', 3)))
+                ->acceptJson()
+                ->withHeaders(['X-Core-Token' => (string) config('core.token')])
+                ->send(strtoupper($method), $this->endpoint($path), $options);
+        } catch (Throwable $e) {
+            Log::warning('Core control-plane call failed', [
+                'path' => $path,
+                'error' => $e->getMessage(),
+            ]);
+
+            return ['ok' => false, 'status' => 0, 'data' => ['error' => 'core_unreachable']];
+        }
+
+        $json = $response->json();
+
+        return [
+            'ok' => $response->successful(),
+            'status' => $response->status(),
+            'data' => is_array($json) ? $json : [],
+        ];
+    }
+
+    /** @return array{ok: bool, status: int, data: array<string, mixed>} */
+    public function licenseStatus(): array
+    {
+        return $this->control('GET', '/v1/license/status');
+    }
+
+    /** @return array{ok: bool, status: int, data: array<string, mixed>} */
+    public function licenseRequest(): array
+    {
+        return $this->control('POST', '/v1/license/request');
+    }
+
+    /** @return array{ok: bool, status: int, data: array<string, mixed>} */
+    public function licenseActivate(string $licenseFile): array
+    {
+        return $this->control('POST', '/v1/license/activate', [], $licenseFile);
+    }
+
+    /** @return array{ok: bool, status: int, data: array<string, mixed>} */
+    public function licenseCrl(string $crlFile): array
+    {
+        return $this->control('POST', '/v1/license/crl', [], $crlFile);
+    }
+
+    /** @return array{ok: bool, status: int, data: array<string, mixed>} */
+    public function entitlementToken(): array
+    {
+        return $this->control('GET', '/v1/entitlement/token');
+    }
+
+    /** @return array{ok: bool, status: int, data: array<string, mixed>} */
+    public function entitlementPublicKey(): array
+    {
+        return $this->control('GET', '/v1/entitlement/pubkey');
+    }
+
+    /** @return array{ok: bool, status: int, data: array<string, mixed>} */
+    public function extensions(): array
+    {
+        return $this->control('GET', '/v1/extensions');
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $extensions
+     * @return array{ok: bool, status: int, data: array<string, mixed>}
+     */
+    public function syncExtensions(array $extensions): array
+    {
+        return $this->control('POST', '/v1/extensions/sync', ['extensions' => $extensions]);
+    }
+
+    /** @return array{ok: bool, status: int, data: array<string, mixed>} */
+    public function setExtension(string $id, bool $enabled): array
+    {
+        return $this->control('POST', '/v1/extensions/set', ['id' => $id, 'enabled' => $enabled]);
+    }
+
+    /** @return array{ok: bool, status: int, data: array<string, mixed>} */
+    public function audit(string $action, string $detail = '', string $actor = ''): array
+    {
+        return $this->control('POST', '/v1/audit', [
+            'action' => $action,
+            'detail' => $detail,
+            'actor' => $actor,
+        ]);
+    }
+
+    /** @return array{ok: bool, status: int, data: array<string, mixed>} */
+    public function usage(int $activeUsers): array
+    {
+        return $this->control('POST', '/v1/license/usage', ['active_users' => max(0, $activeUsers)]);
     }
 
     /**

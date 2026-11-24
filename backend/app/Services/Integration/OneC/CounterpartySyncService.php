@@ -2,7 +2,7 @@
 
 namespace App\Services\Integration\OneC;
 
-use App\Models\Crm\Company;
+use App\Extensions\Crm\Models\Company;
 use Illuminate\Support\Facades\DB;
 
 /**

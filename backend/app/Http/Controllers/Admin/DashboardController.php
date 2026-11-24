@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Extensions\Mail\Services\MailAccountService;
 use App\Http\Controllers\Controller;
 use App\Models\IssuePriority;
 use App\Models\IssueStatus;
 use App\Models\Role;
 use App\Models\Space;
 use App\Models\User;
-use App\Services\Mail\MailAccountService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -202,7 +202,55 @@ class DashboardController extends Controller
             return back()->with('error', 'Нельзя удалить себя');
         }
 
-        $user->delete();
+        $replacementId = (int) $request->user()->id;
+
+        DB::transaction(function () use ($user, $replacementId): void {
+            $userId = (int) $user->id;
+
+            // Chat ownership has no replacement value in the schema: hand it to
+            // another member, otherwise to the administrator doing the deletion.
+            if (Schema::hasTable('chats') && Schema::hasTable('chat_members')) {
+                foreach (DB::table('chats')->where('created_by', $userId)->pluck('id') as $chatId) {
+                    $memberId = DB::table('chat_members')
+                        ->where('chat_id', $chatId)
+                        ->where('user_id', '!=', $userId)
+                        ->orderBy('id')
+                        ->value('user_id');
+
+                    DB::table('chats')->where('id', $chatId)->update([
+                        'created_by' => $memberId !== null ? (int) $memberId : $replacementId,
+                    ]);
+                }
+            }
+
+            // These NOT NULL ownership/audit columns use NO ACTION foreign keys,
+            // so keep the content and attribute it to the acting administrator.
+            $ownedTables = [
+                'projects' => 'created_by',
+                'boards' => 'created_by',
+                'spaces' => 'created_by',
+                'issues' => 'created_by',
+                'pages' => 'author_id',
+                'page_versions' => 'author_id',
+                'issue_links' => 'created_by',
+                'issue_attachments' => 'uploaded_by',
+                'page_attachments' => 'uploaded_by',
+            ];
+
+            foreach ($ownedTables as $table => $column) {
+                if (Schema::hasTable($table)) {
+                    DB::table($table)->where($column, $userId)->update([$column => $replacementId]);
+                }
+            }
+
+            // Messages cannot be re-attributed without falsifying authorship, so
+            // the departing user's messages are removed with the account.
+            if (Schema::hasTable('messages')) {
+                DB::table('messages')->where('sender_id', $userId)->delete();
+            }
+
+            $user->delete();
+        });
 
         return back()->with('success', 'Пользователь удален');
     }

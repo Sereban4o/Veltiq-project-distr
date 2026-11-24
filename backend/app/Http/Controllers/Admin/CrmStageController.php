@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Api\Crm\PipelineStageController;
 use App\Http\Controllers\Controller;
-use App\Models\Crm\PipelineStage;
+use App\Extensions\Crm\Http\Controllers\PipelineStageController;
+use App\Extensions\Crm\Models\PipelineStage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 

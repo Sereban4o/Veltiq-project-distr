@@ -1,0 +1,36 @@
+# Edition overlay: third-party modules.
+#
+# Mounts a writable volume for customer/partner modules and points the module
+# registry at it (docs/11-modules.md). Vendor modules still ship inside the image
+# (`backend/modules`); this volume is for modules installed from the admin panel.
+#
+# Installing unsigned modules additionally requires developer mode:
+#   MODULES_ALLOW_UNSIGNED=true  in backend/.env.production
+# A third-party module is ordinary PHP with full access to data and files — there
+# is no sandbox, so enable it only for a trusted operator.
+#
+# Usage:
+#   docker compose --env-file backend/.env.production \
+#     -f docker-compose.prod.yml -f docker-compose.modules.yml up -d
+
+services:
+  app:
+    volumes:
+      - extensions_data:/var/www/extensions
+    environment:
+      - EXTENSIONS_PATH=/var/www/extensions
+
+  worker:
+    volumes:
+      - extensions_data:/var/www/extensions
+    environment:
+      - EXTENSIONS_PATH=/var/www/extensions
+
+  scheduler:
+    volumes:
+      - extensions_data:/var/www/extensions
+    environment:
+      - EXTENSIONS_PATH=/var/www/extensions
+
+volumes:
+  extensions_data:

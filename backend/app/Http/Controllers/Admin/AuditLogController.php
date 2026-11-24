@@ -94,8 +94,8 @@ class AuditLogController extends Controller
             ->when($filters['action'], fn ($q, $action) => $q->where('action', $action))
             ->when($filters['subject_type'], fn ($q, $type) => $q->where('subject_type', $type))
             ->when($filters['q'], fn ($q, $term) => $q->where(function ($sub) use ($term) {
-                $sub->where('description', 'ilike', "%{$term}%")
-                    ->orWhere('action', 'ilike', "%{$term}%");
+                $sub->whereLike('description', "%{$term}%")
+                    ->orWhereLike('action', "%{$term}%");
             }))
             ->when($filters['date_from'], fn ($q, $from) => $q->where('created_at', '>=', $from))
             ->when($filters['date_to'], fn ($q, $to) => $q->where('created_at', '<=', $to));

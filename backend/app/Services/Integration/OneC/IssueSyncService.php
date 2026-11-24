@@ -126,7 +126,7 @@ class IssueSyncService
         $name = trim((string) $name);
 
         if ($name !== '') {
-            $type = IssueType::where('name', 'ilike', $name)->first();
+            $type = IssueType::whereLike('name', $name)->first();
             if ($type) {
                 return $type;
             }
@@ -140,7 +140,7 @@ class IssueSyncService
         $name = trim((string) $name);
 
         if ($name !== '') {
-            $status = IssueStatus::where('name', 'ilike', $name)->first();
+            $status = IssueStatus::whereLike('name', $name)->first();
             if ($status) {
                 return $status;
             }

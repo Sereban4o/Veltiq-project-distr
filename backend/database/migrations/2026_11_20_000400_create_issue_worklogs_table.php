@@ -22,12 +22,17 @@ return new class() extends Migration {
             $table->index(['issue_id', 'started_at']);
         });
 
-        // A user can have only one running timer per issue.
-        DB::statement(
-            'CREATE UNIQUE INDEX IF NOT EXISTS issue_worklogs_running_unique
-             ON issue_worklogs (issue_id, user_id)
-             WHERE is_running',
-        );
+        // A user can have only one running timer per issue. Partial unique
+        // indexes exist in PostgreSQL/SQLite only; MySQL/MariaDB cannot express
+        // them, so the rule is enforced by the application there.
+        $driver = DB::connection()->getDriverName();
+        if (in_array($driver, ['pgsql', 'sqlite'], true)) {
+            DB::statement(
+                'CREATE UNIQUE INDEX IF NOT EXISTS issue_worklogs_running_unique
+                 ON issue_worklogs (issue_id, user_id)
+                 WHERE is_running',
+            );
+        }
     }
 
     public function down(): void

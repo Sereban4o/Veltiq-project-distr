@@ -1,0 +1,16 @@
+{
+    "id": "docs",
+    "name": "Документация",
+    "version": "1.0.0",
+    "vendor": "Veltiq",
+    "tier": "vendor",
+    "requires": { "core": ">=1.0", "php": ">=8.5", "extensions": [] },
+    "provider": "App\\Extensions\\Docs\\DocsModuleProvider",
+    "psr4": { "App\\Extensions\\Docs\\": "src/" },
+    "routes": "routes/api.php",
+    "menu": [
+        { "key": "knowledgebase", "text": "Документация", "path": "/knowledgebase" }
+    ],
+    "enabled": true,
+    "uninstall": "retain"
+}

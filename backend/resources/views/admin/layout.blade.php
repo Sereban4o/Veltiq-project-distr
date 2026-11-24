@@ -382,6 +382,7 @@
                 <a href="{{ route('admin.counterparties.index') }}" class="{{ request()->routeIs('admin.counterparties.*') ? 'active' : '' }}">🏢 Контрагенты</a>
                 <a href="{{ route('admin.storage.index') }}" class="{{ request()->routeIs('admin.storage.*') ? 'active' : '' }}">🗂️ Хранилище</a>
                 <a href="{{ route('admin.branding.index') }}" class="{{ request()->routeIs('admin.branding.*') ? 'active' : '' }}">🎨 Брендинг</a>
+                <a href="{{ route('admin.templates.index') }}" class="{{ request()->routeIs('admin.templates.*') ? 'active' : '' }}">🧩 Шаблоны</a>
             </div>
 
             <div class="nav-group">
@@ -398,6 +399,12 @@
                 <a href="{{ route('admin.audit.index') }}" class="{{ request()->routeIs('admin.audit.*') ? 'active' : '' }}">🧾 Аудит</a>
                 <a href="{{ route('admin.login-logs.index') }}" class="{{ request()->routeIs('admin.login-logs.*') ? 'active' : '' }}">🔑 Журнал входов</a>
                 <a href="{{ route('admin.storage-audit.index') }}" class="{{ request()->routeIs('admin.storage-audit.*') ? 'active' : '' }}">🗂️ Аудит хранилища</a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-label">Платформа</div>
+                <a href="{{ route('admin.license.index') }}" class="{{ request()->routeIs('admin.license.*') ? 'active' : '' }}">🔑 Лицензия</a>
+                <a href="{{ route('admin.extensions.index') }}" class="{{ request()->routeIs('admin.extensions.*') ? 'active' : '' }}">🧱 Расширения</a>
             </div>
 
             <div class="nav-group">

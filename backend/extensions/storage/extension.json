@@ -1,0 +1,17 @@
+{
+    "id": "storage",
+    "name": "Файловое хранилище",
+    "version": "1.0.0",
+    "vendor": "Veltiq",
+    "tier": "vendor",
+    "requires": { "core": ">=1.0", "php": ">=8.5", "extensions": [] },
+    "provider": "App\\Extensions\\Storage\\StorageModuleProvider",
+    "psr4": { "App\\Extensions\\Storage\\": "src/" },
+    "routes": "routes/api.php",
+    "migrations": "database/migrations",
+    "menu": [
+        { "key": "files", "text": "Файлы", "path": "/files" }
+    ],
+    "enabled": true,
+    "uninstall": "retain"
+}

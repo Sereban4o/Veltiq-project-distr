@@ -4,17 +4,12 @@ namespace App\Services\Tasksbase;
 
 use App\Models\Sprint;
 use App\Models\SprintSnapshot;
-use App\Services\Core\CoreClient;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 class SprintMetricsService
 {
-    public function __construct(private readonly CoreClient $core)
-    {
-    }
-
     /**
      * @return array{total: int, done: int, points_total: float, points_done: float}
      */
@@ -74,21 +69,8 @@ class SprintMetricsService
             ? (float) $firstSnapshot->points_total
             : $this->stats($sprint)['points_total'];
 
-        $remote = $this->core->sprintBurndown(
-            $start->toDateString(),
-            $end->toDateString(),
-            $totalPoints,
-            $snapshots->map(fn (SprintSnapshot $snapshot) => [
-                'date' => $snapshot->snapshot_date->toDateString(),
-                'points_total' => (float) $snapshot->points_total,
-                'points_done' => (float) $snapshot->points_done,
-                'issues_total' => $snapshot->issues_total,
-                'issues_done' => $snapshot->issues_done,
-            ])->values()->all(),
-        );
-
-        $series = $remote !== null ? $remote['series'] : $this->localSeries($snapshots, $start, $end, $totalPoints);
-        $totalPoints = $remote !== null ? $remote['total_points'] : round($totalPoints, 2);
+        $series = $this->localSeries($snapshots, $start, $end, $totalPoints);
+        $totalPoints = round($totalPoints, 2);
 
         return [
             'sprint_id' => $sprint->id,
@@ -167,10 +149,9 @@ class SprintMetricsService
             ];
         }
 
-        $average = $this->core->sprintVelocityAverage($completedPoints)
-            ?? ($items === []
-                ? 0.0
-                : round(array_sum($completedPoints) / count($completedPoints), 2));
+        $average = $items === []
+            ? 0.0
+            : round(array_sum($completedPoints) / count($completedPoints), 2);
 
         return [
             'sprints' => $items,

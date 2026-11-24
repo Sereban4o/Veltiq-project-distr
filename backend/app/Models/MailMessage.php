@@ -96,12 +96,12 @@ class MailMessage extends Model
 
     public function crmContact()
     {
-        return $this->belongsTo(\App\Models\Crm\Contact::class, 'crm_contact_id');
+        return $this->belongsTo(\App\Extensions\Crm\Models\Contact::class, 'crm_contact_id');
     }
 
     public function crmCompany()
     {
-        return $this->belongsTo(\App\Models\Crm\Company::class, 'crm_company_id');
+        return $this->belongsTo(\App\Extensions\Crm\Models\Company::class, 'crm_company_id');
     }
 
     // ─── Search (Laravel Scout / Meilisearch) ───

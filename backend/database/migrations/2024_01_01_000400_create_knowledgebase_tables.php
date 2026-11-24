@@ -2,11 +2,16 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class() extends Migration {
     public function up(): void
     {
+        // MySQL cannot use a literal default for JSON columns; the value is
+        // always provided by the application, so only PostgreSQL/SQLite get one.
+        $driver = DB::connection()->getDriverName();
+
         Schema::create('spaces', function (Blueprint $table) {
             $table->id();
             $table->foreignId('created_by')->constrained('users');
@@ -38,7 +43,7 @@ return new class() extends Migration {
             $table->timestamps();
         });
 
-        Schema::create('pages', function (Blueprint $table) {
+        Schema::create('pages', function (Blueprint $table) use ($driver) {
             $table->id();
             $table->foreignId('space_id')->constrained()->cascadeOnDelete();
             $table->foreignId('parent_id')->nullable()->constrained('pages')->nullOnDelete();
@@ -48,7 +53,10 @@ return new class() extends Migration {
             $table->longText('body')->nullable();
             $table->enum('status', ['draft', 'published', 'archived'])->default('draft');
             $table->integer('version')->default(1);
-            $table->json('labels')->default('[]');
+            $labels = $table->json('labels');
+            if (in_array($driver, ['pgsql', 'sqlite'], true)) {
+                $labels->default('[]');
+            }
             $table->json('metadata')->nullable();
             $table->timestamps();
             $table->softDeletes();

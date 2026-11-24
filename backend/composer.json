@@ -52,6 +52,18 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/",
+            "App\\Extensions\\Ai\\": "extensions/ai/src/",
+            "App\\Extensions\\Calendar\\": "extensions/calendar/src/",
+            "App\\Extensions\\Crm\\": "extensions/crm/src/",
+            "App\\Extensions\\Storage\\": "extensions/storage/src/",
+            "App\\Extensions\\Mail\\": "extensions/mail/src/",
+            "App\\Extensions\\Reports\\": "extensions/reports/src/",
+            "App\\Extensions\\Automation\\": "extensions/automation/src/",
+            "App\\Extensions\\Roadmap\\": "extensions/roadmap/src/",
+            "App\\Extensions\\Timesheet\\": "extensions/timesheet/src/",
+            "App\\Extensions\\Docs\\": "extensions/docs/src/",
+            "App\\Extensions\\Chat\\": "extensions/chat/src/",
+            "App\\Extensions\\Tasksbase\\": "extensions/tasksbase/src/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
         }

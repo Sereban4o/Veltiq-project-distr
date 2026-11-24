@@ -1,0 +1,16 @@
+{
+    "id": "reports",
+    "name": "Отчёты",
+    "version": "1.0.0",
+    "vendor": "Veltiq",
+    "tier": "vendor",
+    "requires": { "core": ">=1.0", "php": ">=8.5", "extensions": ["tasksbase"] },
+    "provider": "App\\Extensions\\Reports\\ReportsModuleProvider",
+    "psr4": { "App\\Extensions\\Reports\\": "src/" },
+    "routes": "routes/api.php",
+    "menu": [
+        { "key": "reports", "text": "Отчёты", "path": "/reports" }
+    ],
+    "enabled": true,
+    "uninstall": "retain"
+}

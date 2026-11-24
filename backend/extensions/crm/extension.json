@@ -1,0 +1,19 @@
+{
+    "id": "crm",
+    "name": "CRM",
+    "version": "1.0.0",
+    "vendor": "Veltiq",
+    "tier": "vendor",
+    "requires": { "core": ">=1.0", "php": ">=8.5", "extensions": ["tasksbase", "mail", "storage"] },
+    "entitlement": "crm",
+    "provider": "App\\Extensions\\Crm\\CrmModuleProvider",
+    "psr4": { "App\\Extensions\\Crm\\": "src/" },
+    "routes": "routes/api.php",
+    "migrations": "database/migrations",
+    "menu": [
+        { "key": "crm", "text": "CRM", "path": "/crm", "permission": "crm.view" }
+    ],
+    "permissions": ["crm.view"],
+    "enabled": true,
+    "uninstall": "retain"
+}

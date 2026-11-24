@@ -3,8 +3,10 @@ FROM golang:1.23-alpine AS build
 
 WORKDIR /src
 
-# Dependencies are stdlib-only, so no module download is needed.
-COPY go.mod ./
+# Dependencies are pinned in go.sum; pgx is the only non-stdlib dependency.
+COPY go.mod go.sum ./
+RUN go mod download
+
 COPY main.go ./
 COPY internal ./internal
 
@@ -19,6 +21,11 @@ FROM alpine:3.20
 RUN adduser -D -H -u 10001 core
 
 COPY --from=build /out/core /usr/local/bin/core
+
+# License/module state lives here (compose mounts `core_data`). The directory must
+# be owned by the service user, otherwise the first start fails with
+# "mkdir /var/lib/core: permission denied".
+RUN mkdir -p /var/lib/core && chown -R core:core /var/lib/core
 
 USER core
 EXPOSE 8080

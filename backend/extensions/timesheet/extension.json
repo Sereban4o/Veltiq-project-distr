@@ -1,0 +1,16 @@
+{
+    "id": "timesheet",
+    "name": "Табель",
+    "version": "1.0.0",
+    "vendor": "Veltiq",
+    "tier": "vendor",
+    "requires": { "core": ">=1.0", "php": ">=8.5", "extensions": ["tasksbase"] },
+    "provider": "App\\Extensions\\Timesheet\\TimesheetModuleProvider",
+    "psr4": { "App\\Extensions\\Timesheet\\": "src/" },
+    "routes": "routes/api.php",
+    "menu": [
+        { "key": "timesheet", "text": "Табель", "path": "/timesheet" }
+    ],
+    "enabled": true,
+    "uninstall": "retain"
+}

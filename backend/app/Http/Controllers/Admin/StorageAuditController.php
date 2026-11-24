@@ -86,7 +86,7 @@ class StorageAuditController extends Controller
             ->when($filters['user_id'], fn ($q, $userId) => $q->where('user_id', $userId))
             ->when($filters['action'], fn ($q, $action) => $q->where('action', $action))
             ->when($filters['status'] !== null, fn ($q) => $q->where('status', $filters['status']))
-            ->when($filters['q'], fn ($q, $term) => $q->where('path', 'ilike', "%{$term}%"))
+            ->when($filters['q'], fn ($q, $term) => $q->whereLike('path', "%{$term}%"))
             ->when($filters['date_from'], fn ($q, $from) => $q->where('created_at', '>=', $from))
             ->when($filters['date_to'], fn ($q, $to) => $q->where('created_at', '<=', $to));
     }

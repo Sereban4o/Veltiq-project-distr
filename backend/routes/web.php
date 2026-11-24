@@ -9,6 +9,8 @@ use App\Http\Controllers\Admin\CounterpartyController;
 use App\Http\Controllers\Admin\CrmStageController;
 use App\Http\Controllers\Admin\CustomFieldController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ExtensionController;
+use App\Http\Controllers\Admin\LicenseController;
 use App\Http\Controllers\Admin\LoginLogController;
 use App\Http\Controllers\Admin\NotificationBroadcastController;
 use App\Http\Controllers\Admin\NotificationSettingsController;
@@ -16,8 +18,12 @@ use App\Http\Controllers\Admin\ReleaseController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\StorageAuditController;
 use App\Http\Controllers\Admin\StorageController;
+use App\Http\Controllers\Admin\TemplateController;
 use App\Http\Controllers\Admin\WebhookController;
 use App\Http\Controllers\Admin\WidgetController;
+use App\Http\Controllers\InstallController;
+use App\Http\Controllers\TemplateAssetController;
+use App\Http\Controllers\TemplateServeController;
 use App\Http\Middleware\EnsureUserIsAdmin;
 use Illuminate\Support\Facades\Route;
 
@@ -26,6 +32,17 @@ use Illuminate\Support\Facades\Route;
 | Web Routes
 |--------------------------------------------------------------------------
 */
+
+// ─── Installer (available until storage/app/installed.lock exists) ──────────
+// Read-only steps are not throttled: the SPA and browser prefetch may re-open
+// the wizard repeatedly. Only the credential/token-bearing POSTs are limited.
+Route::prefix('install')->name('install.')->group(function () {
+    Route::get('/', [InstallController::class, 'show'])->name('welcome');
+    Route::get('/database', [InstallController::class, 'databaseForm'])->name('database');
+    Route::post('/database', [InstallController::class, 'database'])->name('database.store')->middleware('throttle:10,1');
+    Route::get('/admin', [InstallController::class, 'adminForm'])->name('admin');
+    Route::post('/admin', [InstallController::class, 'finish'])->name('finish')->middleware('throttle:10,1');
+});
 
 // API root
 Route::get('/', function () {
@@ -37,6 +54,18 @@ Route::get('/login', function () {
     return redirect('/');
 })->name('login');
 
+// Public template rendering (docs/13-template-system.md). The `license` gate
+// keeps custom templates offline when the installation is not licensed.
+Route::middleware(['license'])->group(function () {
+    Route::get('/template/{slug}/data', [TemplateServeController::class, 'data'])->name('template.data');
+    Route::get('/template/{slug}/{page?}', [TemplateServeController::class, 'serve'])
+        ->where('page', '.*')
+        ->name('template.serve');
+    Route::get('/template-assets/{slug}/{path?}', [TemplateAssetController::class, 'serve'])
+        ->where('path', '.*')
+        ->name('template.assets.serve');
+});
+
 // Admin Auth Routes (public)
 Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login.form');
 Route::post('/admin/login', [AdminAuthController::class, 'login'])->name('admin.login')->middleware('throttle:5,1');
@@ -47,6 +76,21 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])->prefix('admin')->name('ad
 
     // Dashboard
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Licensing & modules (docs/11-extensions.md, docs/12-licensing.md). These must
+    // stay reachable while the product is blocked.
+    Route::get('/license', [LicenseController::class, 'index'])->name('license.index');
+    Route::post('/license/request', [LicenseController::class, 'request'])->name('license.request');
+    Route::post('/license/activate', [LicenseController::class, 'activate'])->name('license.activate');
+    Route::post('/license/crl', [LicenseController::class, 'crl'])->name('license.crl');
+    Route::get('/extensions', [ExtensionController::class, 'index'])->name('extensions.index');
+    Route::post('/extensions/install', [ExtensionController::class, 'install'])->name('extensions.install');
+    Route::post('/extensions/{id}/toggle', [ExtensionController::class, 'toggle'])
+        ->name('extensions.toggle')
+        ->where('id', '[a-z0-9._-]+');
+    Route::post('/extensions/{id}/uninstall', [ExtensionController::class, 'uninstall'])
+        ->name('extensions.uninstall')
+        ->where('id', '[a-z0-9._-]+');
 
     // Users
     Route::get('/users', [DashboardController::class, 'users'])->name('users.index');
@@ -150,6 +194,16 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])->prefix('admin')->name('ad
     // Runtime branding / theme
     Route::get('/branding', [BrandingController::class, 'index'])->name('branding.index');
     Route::put('/branding', [BrandingController::class, 'update'])->name('branding.update');
+
+    // Uploadable templates (HTML/CSS/JS themes, docs/13-template-system.md)
+    Route::get('/templates', [TemplateController::class, 'index'])->name('templates.index');
+    Route::post('/templates', [TemplateController::class, 'upload'])->name('templates.upload');
+    Route::post('/templates/{id}/activate', [TemplateController::class, 'activate'])
+        ->whereNumber('id')->name('templates.activate');
+    Route::post('/templates/{id}/deactivate', [TemplateController::class, 'deactivate'])
+        ->whereNumber('id')->name('templates.deactivate');
+    Route::delete('/templates/{id}', [TemplateController::class, 'destroy'])
+        ->whereNumber('id')->name('templates.destroy');
 
     // Outbound webhooks (integrations)
     Route::get('/webhooks', [WebhookController::class, 'index'])->name('webhooks.index');

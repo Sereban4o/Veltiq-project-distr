@@ -207,8 +207,8 @@ class Issue extends Model
     public function scopeSearch($query, string $search)
     {
         return $query->where(function ($q) use ($search) {
-            $q->where('summary', 'ilike', "%{$search}%")
-              ->orWhere('description', 'ilike', "%{$search}%");
+            $q->whereLike('summary', "%{$search}%")
+              ->orWhereLike('description', "%{$search}%");
         });
     }
 

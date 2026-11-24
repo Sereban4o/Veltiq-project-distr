@@ -114,8 +114,8 @@ class Page extends Model
     public function scopeSearch($query, string $search)
     {
         return $query->where(function ($q) use ($search) {
-            $q->where('title', 'ilike', "%{$search}%")
-              ->orWhere('body', 'ilike', "%{$search}%");
+            $q->whereLike('title', "%{$search}%")
+              ->orWhereLike('body', "%{$search}%");
         });
     }
 

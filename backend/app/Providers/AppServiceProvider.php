@@ -10,15 +10,16 @@ use App\Models\Project;
 use App\Models\Role;
 use App\Models\Space;
 use App\Models\User;
+use App\Extensions\Calendar\Services\DnsHostResolver;
+use App\Extensions\Calendar\Services\HostResolver;
+use App\Extensions\Storage\Services\StorageConfig;
+use App\Extensions\Storage\Services\StorageDriverFactory;
 use App\Observers\AuditObserver;
 use App\Observers\IssueWebhookObserver;
 use App\Observers\MessageObserver;
 use App\Observers\NotificationObserver;
-use App\Services\Calendar\DnsHostResolver;
-use App\Services\Calendar\HostResolver;
+use App\Services\Extensions\ExtensionRegistry;
 use App\Services\Permissions\PermissionGate;
-use App\Services\Storage\StorageConfig;
-use App\Services\Storage\StorageDriverFactory;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -31,6 +32,17 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->scoped(StorageConfig::class, fn () => StorageConfig::fromSettings());
         $this->app->bind(StorageDriverFactory::class, fn ($app, array $params = []) => new StorageDriverFactory($params['config'] ?? $app->make(StorageConfig::class)));
+
+        // Mount extension providers (docs/11-extensions.md). All discovered extensions are
+        // mounted so `route:cache` and `config:cache` stay deterministic and the
+        // route table does not depend on a warm runtime cache; whether a module
+        // actually answers is decided by the `extension.enabled` middleware.
+        $registry = $this->app->make(ExtensionRegistry::class);
+        $registry->mount($this->app);
+
+        // Keep old class names working for one release: queued job payloads and
+        // third-party extensions may still reference pre-extension locations.
+        \App\Support\LegacyClassAliases::register();
     }
 
     public function boot(): void

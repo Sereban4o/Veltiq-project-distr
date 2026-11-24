@@ -1,0 +1,16 @@
+{
+    "id": "tasksbase",
+    "name": "Задачи",
+    "version": "1.0.0",
+    "vendor": "Veltiq",
+    "tier": "vendor",
+    "requires": { "core": ">=1.0", "php": ">=8.5", "extensions": [] },
+    "provider": "App\\Extensions\\Tasksbase\\TasksbaseModuleProvider",
+    "psr4": { "App\\Extensions\\Tasksbase\\": "src/" },
+    "routes": "routes/api.php",
+    "menu": [
+        { "key": "board", "text": "Канбан-доска", "path": "/" }
+    ],
+    "enabled": true,
+    "uninstall": "retain"
+}

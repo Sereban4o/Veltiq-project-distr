@@ -24,11 +24,11 @@ class NotificationBroadcastController extends Controller
             ->with(['user:id,first_name,last_name,email'])
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($sub) use ($search) {
-                    $sub->where('type', 'ilike', "%{$search}%")
+                    $sub->whereLike('type', "%{$search}%")
                         ->orWhereHas('user', function ($user) use ($search) {
-                            $user->where('email', 'ilike', "%{$search}%")
-                                ->orWhere('first_name', 'ilike', "%{$search}%")
-                                ->orWhere('last_name', 'ilike', "%{$search}%");
+                            $user->whereLike('email', "%{$search}%")
+                                ->orWhereLike('first_name', "%{$search}%")
+                                ->orWhereLike('last_name', "%{$search}%");
                         });
                 });
             })

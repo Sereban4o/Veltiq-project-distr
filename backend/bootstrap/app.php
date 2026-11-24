@@ -22,6 +22,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // release; mismatches are audited, never blocking.
         $middleware->api(append: [\App\Http\Middleware\VerifyBundleIntegrity::class]);
 
+        // Licensing gate (docs/12-licensing.md): blocks the API when there is no
+        // usable license. Whitelisted paths (admin, auth, branding, license) and
+        // the read-only mode are handled inside the middleware.
+        $middleware->api(append: [\App\Http\Middleware\EnsureLicense::class]);
+
         $middleware->alias([
             'auth' => \App\Http\Middleware\Authenticate::class,
             'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
@@ -30,6 +35,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'query.token' => \App\Http\Middleware\QueryTokenAuth::class,
             'debug' => \App\Http\Middleware\DebugMiddleware::class,
             'one.c' => \App\Http\Middleware\VerifyOneCRequest::class,
+            'license' => \App\Http\Middleware\EnsureLicense::class,
+            'entitlement' => \App\Http\Middleware\EnsureEntitlement::class,
+            'extension.enabled' => \App\Http\Middleware\EnsureExtensionEnabled::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
