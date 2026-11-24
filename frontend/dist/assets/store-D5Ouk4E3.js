@@ -1,1 +1,0 @@
-import{c as r,a as d}from"./index-Bp3P-Mpd.js";let s=!1;const c=r(e=>({widgets:[],loaded:!1,load:async()=>{var t;if(!s){s=!0;try{const a=((t=(await d.get("/v1/widgets")).data)==null?void 0:t.data)??[];e({widgets:Array.isArray(a)?a:[],loaded:!0})}catch{e({widgets:[],loaded:!0})}}}}));export{c as u};

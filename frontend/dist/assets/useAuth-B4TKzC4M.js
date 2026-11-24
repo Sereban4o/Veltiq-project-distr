@@ -1,0 +1,1 @@
+import{u as f}from"./authStore-DSzNHQPn.js";function h(){const{user:r,token:t,loading:e,error:o,login:u,verifyTwoFactor:n,register:s,logout:i,fetchUser:a,clearError:c}=f();return{user:r,token:t,loading:e,error:o,isAuthenticated:!!t&&!!r,login:u,verifyTwoFactor:n,register:s,logout:i,fetchUser:a,clearError:c}}export{h as u};
