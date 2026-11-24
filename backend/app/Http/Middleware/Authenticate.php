@@ -6,12 +6,40 @@ use Closure;
 use Illuminate\Auth\Middleware\Authenticate as Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class Authenticate extends Middleware
 {
     protected function redirectTo(Request $request): ?string
     {
-        return null;
+        if ($request->expectsJson()) {
+            return null;
+        }
+
+        return $request->is('admin', 'admin/*')
+            ? route('admin.login.form')
+            : route('login');
+    }
+
+    /**
+     * An admin session that silently disappears is hard to diagnose from the
+     * outside: record what the request actually carried before redirecting.
+     *
+     * @param  array<int, string|null>  $guards
+     */
+    protected function unauthenticated($request, array $guards)
+    {
+        if ($request->is('admin', 'admin/*')) {
+            Log::warning('Admin authentication lost', [
+                'path' => $request->path(),
+                'method' => $request->method(),
+                'cookies' => array_keys($request->cookies->all()),
+                'session' => $request->hasSession() ? $request->session()->getId() : null,
+                'secure' => $request->isSecure(),
+            ]);
+        }
+
+        parent::unauthenticated($request, $guards);
     }
 
     /**

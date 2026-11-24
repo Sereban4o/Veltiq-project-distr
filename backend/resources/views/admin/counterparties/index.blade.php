@@ -83,6 +83,7 @@
                 <th>Юр/Физ</th>
                 <th>Телефон</th>
                 <th>Email</th>
+                <th>Юр. адрес</th>
                 <th>Код 1С</th>
                 <th>Обновлено</th>
             </tr>
@@ -106,12 +107,13 @@
                 <td>{{ $company->legal_physical_person ?: '—' }}</td>
                 <td>{{ $company->phone ?: '—' }}</td>
                 <td>{{ $company->email ?: '—' }}</td>
+                <td>{{ $company->legal_address ?: '—' }}</td>
                 <td>{{ $company->code_1c ?: '—' }}</td>
                 <td>{{ $company->synced_at ? $company->synced_at->format('d.m.Y H:i') : '—' }}</td>
             </tr>
             @empty
             <tr>
-                <td colspan="10" style="text-align: center; padding: 2rem; color: #6B778C;">Контрагенты не найдены</td>
+                <td colspan="11" style="text-align: center; padding: 2rem; color: #6B778C;">Контрагенты не найдены</td>
             </tr>
             @endforelse
         </tbody>

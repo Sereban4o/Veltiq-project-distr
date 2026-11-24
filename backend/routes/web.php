@@ -68,7 +68,7 @@ Route::middleware(['license'])->group(function () {
 
 // Admin Auth Routes (public)
 Route::get('/admin/login', [AdminAuthController::class, 'showLoginForm'])->name('admin.login.form');
-Route::post('/admin/login', [AdminAuthController::class, 'login'])->name('admin.login')->middleware('throttle:5,1');
+Route::post('/admin/login', [AdminAuthController::class, 'login'])->name('admin.login')->middleware('throttle:admin-login');
 Route::post('/admin/logout', [AdminAuthController::class, 'logout'])->name('admin.logout');
 
 // Admin Panel routes (Blade views) - protected

@@ -300,18 +300,37 @@
             color: var(--text);
         }
 
-        /* Pagination */
-        .pagination { margin-top: 1.5rem; display: flex; justify-content: center; gap: 0.5rem; }
-        .pagination a {
-            padding: 0.5rem 0.875rem;
+        /* Pagination (custom view: resources/views/admin/partials/pagination.blade.php) */
+        .pagination { margin-top: 1.5rem; display: flex; justify-content: center; }
+        .admin-pagination { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; }
+        .admin-pagination .pages { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.35rem; }
+        .admin-pagination .page-btn {
+            min-width: 2.25rem;
+            padding: 0.45rem 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 6px;
             text-decoration: none;
             color: var(--primary);
+            font-size: 0.875rem;
+            line-height: 1;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
         }
-        .pagination a:hover { background: var(--surface-2); }
-        .pagination a.active { background: var(--primary); color: white; border-color: var(--primary); }
+        a.page-btn:hover { background: var(--surface-2); border-color: var(--primary); }
+        .admin-pagination .page-btn.is-active { background: var(--primary); color: #fff; border-color: var(--primary); font-weight: 600; }
+        .admin-pagination .page-btn.is-disabled { color: var(--muted); opacity: 0.55; cursor: not-allowed; }
+        .admin-pagination .page-btn.is-ellipsis {
+            min-width: auto;
+            padding-left: 0.2rem;
+            padding-right: 0.2rem;
+            background: transparent;
+            border-color: transparent;
+            color: var(--muted);
+        }
+        .admin-pagination .pager-info { color: var(--muted); font-size: 0.8125rem; }
 
         /* Dark-mode fixes for colours hard-coded in page markup */
         [data-theme="dark"] [style*="#6B778C"],

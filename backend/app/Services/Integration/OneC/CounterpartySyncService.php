@@ -42,7 +42,7 @@ class CounterpartySyncService
                 $wasTrashed = $company->trashed();
 
                 $fill = $attributes;
-                foreach (['phone', 'email', 'address'] as $field) {
+                foreach (['phone', 'email', 'address', 'legal_address'] as $field) {
                     if (trim((string) $company->{$field}) === '' && ($contacts[$field] ?? null) !== null) {
                         $fill[$field] = $contacts[$field];
                     }
@@ -173,11 +173,14 @@ class CounterpartySyncService
     /**
      * Derive the legacy CRM contact columns from the 1С ContactInfo array.
      *
-     * @return array{phone:?string,email:?string,address:?string}
+     * 1С splits the address into two ContactInfo rows — «Юридический адрес» and
+     * «Фактический адрес» — so they are mapped onto distinct columns.
+     *
+     * @return array{phone:?string,email:?string,address:?string,legal_address:?string}
      */
     private function deriveContacts(array $contacts): array
     {
-        $result = ['phone' => null, 'email' => null, 'address' => null];
+        $result = ['phone' => null, 'email' => null, 'address' => null, 'legal_address' => null];
 
         foreach ($contacts as $contact) {
             $kind = mb_strtolower((string) ($contact['Kind'] ?? ''));
@@ -202,8 +205,15 @@ class CounterpartySyncService
                 }
             }
 
-            if ($result['address'] === null && (mb_strpos($kind, 'адрес') !== false || mb_strpos($kind, 'address') !== false)) {
-                $result['address'] = $this->str($presentation ?: $value, 255);
+            if (mb_strpos($kind, 'адрес') !== false || mb_strpos($kind, 'address') !== false) {
+                if (mb_strpos($kind, 'юридич') !== false || mb_strpos($kind, 'legal') !== false) {
+                    $result['legal_address'] ??= $this->str($presentation ?: $value, 500);
+                } elseif (mb_strpos($kind, 'фактич') !== false || mb_strpos($kind, 'actual') !== false) {
+                    $result['address'] ??= $this->str($presentation ?: $value, 255);
+                } elseif ($result['address'] === null) {
+                    // Незнакомый вид адреса — оставляем его в legacy-поле.
+                    $result['address'] = $this->str($presentation ?: $value, 255);
+                }
             }
         }
 

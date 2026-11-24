@@ -21,7 +21,10 @@ class AdminAuthController extends Controller
             'password' => ['required'],
         ]);
 
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+        // The admin panel is expected to stay signed in on an operator's
+        // workstation: issue a remember cookie so a lost/expired PHP session
+        // does not silently kick them back to the login form mid-action.
+        if (Auth::attempt($credentials, true)) {
             $request->session()->regenerate();
 
             $user = Auth::user();

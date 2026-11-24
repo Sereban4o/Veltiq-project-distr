@@ -15,7 +15,7 @@ class Company extends Model
     protected $table = 'crm_companies';
 
     protected $fillable = [
-        'name', 'website', 'phone', 'email', 'address', 'industry', 'notes', 'owner_id',
+        'name', 'website', 'phone', 'email', 'address', 'legal_address', 'industry', 'notes', 'owner_id',
         'ref_1c', 'code_1c', 'full_name', 'inn', 'kpp', 'legal_physical_person',
         'registration_country', 'registration_number', 'tax_number', 'okpo_code',
         'head_counterpart', 'partner_1c', 'international_description',

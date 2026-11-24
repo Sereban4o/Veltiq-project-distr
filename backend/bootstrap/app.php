@@ -29,6 +29,13 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->throttleAPI('300,1');
 
+        // A guest who opens the admin panel must land on the admin login form,
+        // not on the API root (`/` answers JSON) — the latter looked like the
+        // panel "kicked" the operator out instead of asking to sign in again.
+        $middleware->redirectGuestsTo(fn (\Illuminate\Http\Request $request) => $request->is('admin', 'admin/*')
+            ? route('admin.login.form')
+            : '/login');
+
         // Reports the frontend bundle id (X-Veltiq-Bundle) against the pinned
         // release; mismatches are audited, never blocking.
         $middleware->api(append: [\App\Http\Middleware\VerifyBundleIntegrity::class]);

@@ -70,7 +70,7 @@ final class CounterpartyConfig
 
     public function namespace(): string
     {
-        return (string) config('one_c.counterparties.namespace', 'http://gertorg.ru/exchange/counterparties');
+        return (string) config('one_c.counterparties.namespace', 'urn:gertorg:exchange:counterparties');
     }
 
     public function portion(): int

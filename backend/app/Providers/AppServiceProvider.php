@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Extensions\Calendar\Services\DnsHostResolver;
+use App\Extensions\Calendar\Services\HostResolver;
+use App\Extensions\Storage\Services\StorageConfig;
+use App\Extensions\Storage\Services\StorageDriverFactory;
 use App\Models\Issue;
 use App\Models\Message;
 use App\Models\Notification;
@@ -10,10 +14,6 @@ use App\Models\Project;
 use App\Models\Role;
 use App\Models\Space;
 use App\Models\User;
-use App\Extensions\Calendar\Services\DnsHostResolver;
-use App\Extensions\Calendar\Services\HostResolver;
-use App\Extensions\Storage\Services\StorageConfig;
-use App\Extensions\Storage\Services\StorageDriverFactory;
 use App\Observers\AuditObserver;
 use App\Observers\IssueWebhookObserver;
 use App\Observers\MessageObserver;
@@ -67,5 +67,10 @@ class AppServiceProvider extends ServiceProvider
 
         // Permission checks through Gate/@can, scoped via the model argument.
         PermissionGate::register();
+
+        // One styled paginator for every admin listing (the framework default
+        // ships a Tailwind markup that is unstyled outside the SPA).
+        \Illuminate\Pagination\Paginator::defaultView('admin.partials.pagination');
+        \Illuminate\Pagination\Paginator::defaultSimpleView('admin.partials.pagination');
     }
 }

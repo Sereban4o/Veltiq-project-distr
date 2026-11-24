@@ -55,8 +55,8 @@ return [
         'login' => env('ONE_C_COUNTERPARTIES_LOGIN'),
         'password' => env('ONE_C_COUNTERPARTIES_PASSWORD'),
         'enabled' => (bool) env('ONE_C_COUNTERPARTIES_ENABLED', true),
-        // Namespace declared by WebService.CounterpartiesExchange.
-        'namespace' => 'http://gertorg.ru/exchange/counterparties',
+        // Namespace declared by WebService.CounterpartiesExchange (per its WSDL).
+        'namespace' => 'urn:gertorg:exchange:counterparties',
         // Rows per SOAP call for the bulk import; 1С clamps to 1000.
         'portion' => (int) env('ONE_C_COUNTERPARTIES_PORTION', 500),
         // Hard cap for the sync loop (max rows = portion * max_pages).
