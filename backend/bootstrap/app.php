@@ -16,6 +16,17 @@ return Application::configure(basePath: dirname(__DIR__))
         ['middleware' => ['auth:sanctum']],
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // nginx terminates the client connection and forwards the real address;
+        // without this every request looks like it comes from the proxy, so the
+        // login/API rate limits and audit IPs are shared by all users (429).
+        $middleware->trustProxies(at: [
+            '127.0.0.1',
+            '10.0.0.0/8',
+            '172.16.0.0/12',
+            '192.168.0.0/16',
+            '::1',
+        ]);
+
         $middleware->throttleAPI('300,1');
 
         // Reports the frontend bundle id (X-Veltiq-Bundle) against the pinned
