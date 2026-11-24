@@ -40,8 +40,12 @@ class ExtensionController extends Controller
         $validated = $request->validate(['enabled' => ['required', 'boolean']]);
 
         if (! $this->registry->setEnabled($id, (bool) $validated['enabled'])) {
+            $why = in_array($this->registry->lastError(), ['core_disabled', 'core_unreachable'], true)
+                ? 'ядро недоступно (проверьте CORE_URL/CORE_TOKEN и контейнер core)'
+                : 'он не входит в лицензию';
+
             return back()->withErrors([
-                'extensions' => "Не удалось изменить расширение {$id}: он не входит в лицензию или ядро недоступно.",
+                'extensions' => "Не удалось изменить расширение {$id}: {$why}.",
             ]);
         }
 

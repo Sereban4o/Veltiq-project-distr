@@ -286,11 +286,41 @@ class ExtensionRegistry
         return $verdicts;
     }
 
+    /** Why the last toggle was rejected (null while it succeeded). */
+    private ?string $lastError = null;
+
+    public function lastError(): ?string
+    {
+        return $this->lastError;
+    }
+
     /** Enable/disable through the core (the authority), then refresh the cache. */
     public function setEnabled(string $id, bool $enabled): bool
     {
+        $this->lastError = null;
+
+        if (! $this->core->enabled()) {
+            $this->lastError = 'core_disabled';
+            Log::warning('Extension toggle failed: the core is not configured', ['id' => $id]);
+
+            return false;
+        }
+
         $response = $this->core->setExtension($id, $enabled);
         if (! $response['ok']) {
+            // status 0 = the core could not be reached; anything else is an
+            // explicit rejection (usually the license does not grant the module).
+            $this->lastError = $response['status'] === 0
+                ? 'core_unreachable'
+                : (string) ($response['data']['error'] ?? 'not_entitled');
+
+            Log::warning('Extension toggle was rejected by the core', [
+                'id' => $id,
+                'enabled' => $enabled,
+                'status' => $response['status'],
+                'error' => $response['data']['error'] ?? null,
+            ]);
+
             return false;
         }
 

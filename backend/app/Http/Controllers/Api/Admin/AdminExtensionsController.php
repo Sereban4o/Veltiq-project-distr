@@ -36,7 +36,10 @@ class AdminExtensionsController extends Controller
         $validated = $request->validate(['enabled' => ['required', 'boolean']]);
 
         if (! $this->registry->setEnabled($id, (bool) $validated['enabled'])) {
-            return response()->json(['error' => 'extension_change_rejected'], 409);
+            return response()->json([
+                'error' => 'extension_change_rejected',
+                'reason' => $this->registry->lastError(),
+            ], 409);
         }
 
         return response()->json(['extensions' => $this->registry->list()]);
