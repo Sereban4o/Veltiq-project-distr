@@ -14,8 +14,9 @@ class RouteServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        RateLimiter::for('api', function ($request) {
-            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
+        RateLimiter::for('api', function (Request $request) {
+            return Limit::perMinute((int) config('rate_limits.api_per_minute', 600))
+                ->by($request->user()?->id ?: $request->ip());
         });
 
         // Blade admin login. Keyed by e-mail + IP so one shared public IP (office

@@ -27,7 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
             '::1',
         ]);
 
-        $middleware->throttleAPI('300,1');
+        $middleware->throttleAPI();
 
         // A guest who opens the admin panel must land on the admin login form,
         // not on the API root (`/` answers JSON) — the latter looked like the
