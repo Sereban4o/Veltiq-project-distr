@@ -12,42 +12,31 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
 
-// Project channels - users can subscribe if they are members
+// Project channels - same access rule the HTTP layer uses (admin/creator/team/public/member).
 Broadcast::channel('project.{projectId}', function ($user, $projectId) {
     if (!$user) return false;
 
-    return (bool) \App\Models\Project::where('id', $projectId)
-        ->whereHas('members', function ($q) use ($user) {
-            $q->where('user_id', $user->id);
-        })
-        ->orWhere('visibility', 'public')
-        ->exists();
+    $project = \App\Models\Project::find($projectId);
+
+    return $project ? $project->canView($user) : false;
 });
 
-// Issue channels - specific issue updates
+// Issue channels - view access to the parent project (admin/creator/team/public/member).
 Broadcast::channel('issue.{issueId}', function ($user, $issueId) {
     if (!$user) return false;
 
-    return (bool) \App\Models\Issue::where('id', $issueId)
-        ->whereHas('project', function ($q) use ($user) {
-            $q->whereHas('members', function ($q2) use ($user) {
-                $q2->where('user_id', $user->id);
-            });
-        })
-        ->exists();
+    $issue = \App\Models\Issue::with('project')->find($issueId);
+
+    return $issue && $issue->project ? $issue->project->canView($user) : false;
 });
 
-// Board channels
+// Board channels - view access to the parent project (admin/creator/team/public/member).
 Broadcast::channel('board.{boardId}', function ($user, $boardId) {
     if (!$user) return false;
 
-    return (bool) \App\Models\Board::where('id', $boardId)
-        ->whereHas('project', function ($q) use ($user) {
-            $q->whereHas('members', function ($q2) use ($user) {
-                $q2->where('user_id', $user->id);
-            });
-        })
-        ->exists();
+    $board = \App\Models\Board::with('project')->find($boardId);
+
+    return $board && $board->project ? $board->project->canView($user) : false;
 });
 
 // Space channels
