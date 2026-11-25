@@ -126,7 +126,31 @@ class User extends Authenticatable
 
     public function getInitialsAttribute(): string
     {
-        return strtoupper(substr($this->first_name, 0, 1) . substr($this->last_name, 0, 1));
+        return $this->nameInitial($this->first_name) . $this->nameInitial($this->last_name);
+    }
+
+    /**
+     * First letter of a name, multibyte-safe.
+     *
+     * Byte-based substr() splits a Cyrillic (2-byte) character in half and
+     * yields invalid UTF-8, which then breaks json_encode() on every response
+     * that carries the initials.
+     */
+    private function nameInitial(?string $name): string
+    {
+        $name = trim((string) $name);
+
+        if ($name === '') {
+            return '';
+        }
+
+        if (function_exists('mb_substr')) {
+            return mb_strtoupper(mb_substr($name, 0, 1, 'UTF-8'), 'UTF-8');
+        }
+
+        preg_match('/./u', $name, $match);
+
+        return strtoupper($match[0] ?? '');
     }
 
     // ─── Scopes ───
