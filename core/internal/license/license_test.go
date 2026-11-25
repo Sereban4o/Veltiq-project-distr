@@ -152,6 +152,12 @@ func TestEvaluateStates(t *testing.T) {
 			wantAccess: AccessBlocked,
 		},
 		{
+			name:       "unbound-empty-servers",
+			license:    licensePtr(License{Lic: "L1", ExpiresAt: now.Add(24 * time.Hour).Format(time.RFC3339)}),
+			wantState:  StateInvalid,
+			wantAccess: AccessBlocked,
+		},
+		{
 			name:       "not-yet-active",
 			license:    licensePtr(License{Lic: "L1", NotBefore: now.Add(24 * time.Hour).Format(time.RFC3339), ExpiresAt: now.Add(48 * time.Hour).Format(time.RFC3339), Servers: []string{"fp_test"}}),
 			wantState:  StateInvalid,
@@ -207,6 +213,22 @@ func TestAllows(t *testing.T) {
 	// A grandfathered install has no license file and ships fully enabled.
 	if !(Status{State: StateGrandfathered}).Allows("mail") {
 		t.Fatal("grandfathered status must allow every module")
+	}
+}
+
+func TestBindsFingerprint(t *testing.T) {
+	// An empty server list must not validate anywhere (unbound = invalid).
+	if (License{}).BindsFingerprint("fp_x") {
+		t.Fatal("empty servers must not bind any installation")
+	}
+
+	bound := License{Servers: []string{"fp_a"}}
+	if !bound.BindsFingerprint("fp_a") {
+		t.Fatal("the listed fingerprint must bind")
+	}
+
+	if bound.BindsFingerprint("fp_b") {
+		t.Fatal("an unlisted fingerprint must not bind")
 	}
 }
 

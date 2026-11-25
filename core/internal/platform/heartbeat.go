@@ -82,6 +82,9 @@ func (s *Service) heartbeat(ctx context.Context) {
 
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("X-Fingerprint", s.fingerprint)
+	if s.cfg.LicenseServerToken != "" {
+		request.Header.Set("X-License-Token", s.cfg.LicenseServerToken)
+	}
 
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {

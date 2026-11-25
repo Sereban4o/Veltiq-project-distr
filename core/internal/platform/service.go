@@ -12,7 +12,9 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"os"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -32,14 +34,21 @@ var ErrNoVendorKey = errors.New("no license public key configured")
 
 // Config is the resolved environment.
 type Config struct {
-	StateDir          string
-	DatabaseURL       string
-	PublicKeyBase64   string
-	ClusterID         string
-	AllowGrandfather  bool
-	LicenseServerURL  string
-	HeartbeatInterval time.Duration
-	AppKey            string
+	StateDir           string
+	DatabaseURL        string
+	PublicKeyBase64    string
+	ClusterID          string
+	AllowGrandfather   bool
+	LicenseServerURL   string
+	LicenseServerToken string
+	HeartbeatInterval  time.Duration
+	AppKey             string
+	// FingerprintMode selects the fingerprint inputs: "v1" (legacy, default)
+	// or "v2" (adds machine/board id + MACs; requires re-binding).
+	FingerprintMode string
+	// InstallID is an optional operator-provided UUID persisted on the host; the
+	// strongest binding factor when set.
+	InstallID string
 }
 
 // Service holds the current decision state.
@@ -125,17 +134,54 @@ func openStore(ctx context.Context, cfg Config) (store.Store, error) {
 }
 
 func fingerprint(cfg Config) string {
-	inputs := []string{cfg.ClusterID, cfg.AppKey}
+	inputs := []string{cfg.ClusterID, cfg.AppKey, cfg.InstallID}
 
-	if id, err := os.ReadFile("/etc/machine-id"); err == nil {
-		inputs = append(inputs, string(id))
+	for _, path := range []string{"/etc/machine-id", "/var/lib/dbus/machine-id"} {
+		if id, err := os.ReadFile(path); err == nil {
+			inputs = append(inputs, string(id))
+
+			break
+		}
 	}
 
 	if host, err := os.Hostname(); err == nil {
 		inputs = append(inputs, host)
 	}
 
+	// v2 adds hardware identifiers so a copied install on different hardware
+	// (or a different VM) yields a different fingerprint.
+	if cfg.FingerprintMode == "v2" {
+		for _, path := range []string{"/sys/class/dmi/id/product_uuid", "/sys/class/dmi/id/board_serial"} {
+			if id, err := os.ReadFile(path); err == nil {
+				inputs = append(inputs, string(id))
+			}
+		}
+
+		inputs = append(inputs, macAddresses()...)
+	}
+
 	return license.Fingerprint(inputs...)
+}
+
+// macAddresses returns sorted MACs of non-loopback interfaces (v2 mode only).
+func macAddresses() []string {
+	interfaces, err := net.Interfaces()
+	if err != nil {
+		return nil
+	}
+
+	macs := make([]string, 0, len(interfaces))
+	for _, iface := range interfaces {
+		if iface.Flags&net.FlagLoopback != 0 || len(iface.HardwareAddr) == 0 {
+			continue
+		}
+
+		macs = append(macs, iface.HardwareAddr.String())
+	}
+
+	sort.Strings(macs)
+
+	return macs
 }
 
 func parsePublicKey(encoded string) (ed25519.PublicKey, error) {

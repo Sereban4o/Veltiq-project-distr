@@ -29,6 +29,13 @@ return [
     // it to the core (defence in depth, the core verifies it too).
     'public_key' => (string) env('LICENSE_PUBLIC_KEY', ''),
 
+    // Veltiq LK machine API base (e.g. https://lk.veltiq.ru/api) for online
+    // activation by account credentials. The product posts to
+    // `{lk_api_url}/v1/account/activate` with the project token below.
+    'lk_api_url' => rtrim((string) env('LICENSE_SERVER_URL', ''), '/'),
+    'project_token' => (string) env('LICENSE_PROJECT_TOKEN', ''),
+    'api_token_header' => (string) env('LICENSE_API_TOKEN_HEADER', 'X-License-Token'),
+
     // How long a verified ticket/state is trusted. Short on purpose: the core is
     // internal and cheap, and a long window would hide an activation until the
     // cache expires. The ticket itself lives 12h in the core.

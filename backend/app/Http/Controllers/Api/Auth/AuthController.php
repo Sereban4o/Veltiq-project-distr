@@ -170,7 +170,12 @@ class AuthController extends Controller
     {
         // Short-lived cache: the chat user picker calls this often.
         $users = Cache::remember('users.all', 60, function () {
-            return User::where('status', 'active')->with('role')->get();
+            return User::where('status', 'active')
+                ->with('role')
+                ->orderByRaw("LOWER(COALESCE(first_name, '')) ASC")
+                ->orderByRaw("LOWER(COALESCE(last_name, '')) ASC")
+                ->orderByRaw("LOWER(COALESCE(email, '')) ASC")
+                ->get();
         });
 
         return response()->json($users);

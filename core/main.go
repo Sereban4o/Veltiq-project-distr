@@ -107,14 +107,17 @@ func main() {
 // grandfather state, and without Postgres it falls back to file state.
 func newPlatformService() *platform.Service {
 	cfg := platform.Config{
-		StateDir:          envOr("CORE_STATE_DIR", "/var/lib/core"),
-		DatabaseURL:       os.Getenv("CORE_DATABASE_URL"),
-		PublicKeyBase64:   os.Getenv("LICENSE_PUBLIC_KEY"),
-		ClusterID:         os.Getenv("CORE_CLUSTER_ID"),
-		AllowGrandfather:  envBool("LICENSE_ALLOW_GRANDFATHER", true),
-		LicenseServerURL:  os.Getenv("LICENSE_SERVER_URL"),
-		HeartbeatInterval: time.Duration(envInt("LICENSE_HEARTBEAT_HOURS", 6)) * time.Hour,
-		AppKey:            os.Getenv("APP_KEY"),
+		StateDir:           envOr("CORE_STATE_DIR", "/var/lib/core"),
+		DatabaseURL:        os.Getenv("CORE_DATABASE_URL"),
+		PublicKeyBase64:    os.Getenv("LICENSE_PUBLIC_KEY"),
+		ClusterID:          os.Getenv("CORE_CLUSTER_ID"),
+		AllowGrandfather:   envBool("LICENSE_ALLOW_GRANDFATHER", false),
+		LicenseServerURL:   os.Getenv("LICENSE_SERVER_URL"),
+		LicenseServerToken: os.Getenv("LICENSE_PROJECT_TOKEN"),
+		HeartbeatInterval:  time.Duration(envInt("LICENSE_HEARTBEAT_HOURS", 6)) * time.Hour,
+		AppKey:             os.Getenv("APP_KEY"),
+		FingerprintMode:    envOr("CORE_FINGERPRINT_MODE", "v1"),
+		InstallID:          os.Getenv("CORE_INSTALL_ID"),
 	}
 
 	service, err := platform.New(context.Background(), cfg)

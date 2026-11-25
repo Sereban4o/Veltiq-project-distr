@@ -362,6 +362,8 @@ class ChatController extends Controller
                   ->orWhere('last_name', 'ilike', "%{$query}%")
                   ->orWhere('email', 'ilike', "%{$query}%");
             })
+            ->orderByRaw("LOWER(COALESCE(first_name, '')) ASC")
+            ->orderByRaw("LOWER(COALESCE(last_name, '')) ASC")
             ->limit(10)
             ->get();
 

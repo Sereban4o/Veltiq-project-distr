@@ -85,7 +85,11 @@ func Evaluate(lic *License, now time.Time, revoked map[string]bool, fingerprint 
 	case !lic.BindsFingerprint(fingerprint):
 		status.State = StateInvalid
 		status.Access = AccessBlocked
-		status.Message = "лицензия выдана для другой инсталляции"
+		if len(lic.Servers) == 0 {
+			status.Message = "лицензия не привязана к инсталляции"
+		} else {
+			status.Message = "лицензия выдана для другой инсталляции"
+		}
 	default:
 		notBefore, err := lic.NotBeforeTime()
 		if err != nil {

@@ -86,6 +86,38 @@
 </div>
 
 <div class="form-card" style="max-width: 100%; margin-bottom: 2rem;">
+    <h2>Онлайн-активация по учётной записи</h2>
+    <p style="color: #6B778C; font-size: 0.875rem; margin-bottom: 1.25rem;">
+        Введите e-mail и пароль учётной записи Veltiq LK (lk.veltiq.ru) — сервер лицензий
+        активирует продукт на этот инсталляционный отпечаток и вернёт подписанную лицензию.
+        Ключ лицензии нужен, только если у аккаунта несколько лицензий.
+    </p>
+    <form method="POST" action="{{ route('admin.license.activate-online') }}" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:flex-end;">
+        @csrf
+        <div style="flex:1; min-width:220px;">
+            <label>E-mail (LK)</label>
+            <input type="email" name="email" value="{{ old('email') }}" placeholder="admin@example.com" required>
+        </div>
+        <div style="flex:1; min-width:180px;">
+            <label>Пароль (LK)</label>
+            <input type="password" name="password" autocomplete="off" required>
+        </div>
+        <div style="flex:1; min-width:180px;">
+            <label>Ключ лицензии (опц.)</label>
+            <input type="text" name="key" value="{{ old('key') }}" placeholder="L-2026-0001">
+        </div>
+        <div style="flex:0; display:flex; align-items:flex-end;">
+            <button type="submit" class="btn btn-primary">Активировать онлайн</button>
+        </div>
+    </form>
+    @if($core)
+        <p style="color: #6B778C; font-size: 0.8125rem; margin-top: 0.75rem;">
+            Отпечаток установки: <code>{{ $core['fingerprint'] ?? '—' }}</code>
+        </p>
+    @endif
+</div>
+
+<div class="form-card" style="max-width: 100%; margin-bottom: 2rem;">
     <h2>Активация</h2>
     <p style="color: #6B778C; font-size: 0.875rem; margin-bottom: 1.25rem;">
         Онлайн: просто загрузите файл лицензии. Офлайн (закрытый контур): получите код активации,

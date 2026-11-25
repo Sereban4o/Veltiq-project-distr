@@ -237,7 +237,7 @@ services:
     environment:
       - CORE_STATE_DIR=/var/lib/core
       - LICENSE_PUBLIC_KEY=${LICENSE_PUBLIC_KEY:-}
-      - LICENSE_ALLOW_GRANDFATHER=${LICENSE_ALLOW_GRANDFATHER:-true}
+      - LICENSE_ALLOW_GRANDFATHER=${LICENSE_ALLOW_GRANDFATHER:-false}
       - LICENSE_SERVER_URL=${LICENSE_SERVER_URL:-}
       - LICENSE_HEARTBEAT_HOURS=${LICENSE_HEARTBEAT_HOURS:-6}
     # Compose interpolation only reads the shell and the project `.env` — never

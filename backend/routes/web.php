@@ -83,6 +83,7 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])->prefix('admin')->name('ad
     Route::post('/license/request', [LicenseController::class, 'request'])->name('license.request');
     Route::post('/license/activate', [LicenseController::class, 'activate'])->name('license.activate');
     Route::post('/license/crl', [LicenseController::class, 'crl'])->name('license.crl');
+    Route::post('/license/activate-online', [LicenseController::class, 'activateOnline'])->name('license.activate-online');
     Route::get('/extensions', [ExtensionController::class, 'index'])->name('extensions.index');
     Route::post('/extensions/install', [ExtensionController::class, 'install'])->name('extensions.install');
     Route::post('/extensions/{id}/toggle', [ExtensionController::class, 'toggle'])

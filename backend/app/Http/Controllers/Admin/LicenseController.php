@@ -8,7 +8,9 @@ use App\Services\Core\EntitlementClient;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\View\View;
+use Throwable;
 
 /**
  * License administration page (Blade).
@@ -81,6 +83,71 @@ class LicenseController extends Controller
         $state = $response['data']['status']['state'] ?? 'unknown';
 
         return back()->with('status', "Лицензия установлена, состояние: {$state}.");
+    }
+
+    /** Online activation with the operator's Veltiq LK account. */
+    public function activateOnline(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required', 'string'],
+            'key' => ['nullable', 'string', 'max:64'],
+        ]);
+
+        $apiUrl = (string) config('license.lk_api_url');
+        $token = (string) config('license.project_token');
+
+        if ($apiUrl === '' || $token === '') {
+            return back()->withErrors([
+                'license' => 'Не настроены LICENSE_SERVER_URL / LICENSE_PROJECT_TOKEN.',
+            ]);
+        }
+
+        $requestCode = $this->core->licenseRequest();
+        $fingerprint = $requestCode['ok'] ? ($requestCode['data']['fingerprint'] ?? null) : null;
+
+        if (! is_string($fingerprint) || $fingerprint === '') {
+            return back()->withErrors(['license' => 'Ядро недоступно: не удалось получить fingerprint.']);
+        }
+
+        try {
+            $response = Http::timeout(20)->acceptJson()
+                ->withHeaders([(string) config('license.api_token_header', 'X-License-Token') => $token])
+                ->post($apiUrl . '/v1/account/activate', [
+                    'email' => $data['email'],
+                    'password' => $data['password'],
+                    'key' => $data['key'] ?? null,
+                    'fingerprint' => $fingerprint,
+                    'hostname' => gethostname() ?: null,
+                    'version' => (string) config('app.version', ''),
+                ]);
+        } catch (Throwable $e) {
+            return back()->withErrors(['license' => 'LK недоступен: ' . $e->getMessage()]);
+        }
+
+        if (! $response->successful()) {
+            $reason = (string) ($response->json('reason') ?? 'activation_failed');
+
+            return back()->withErrors(['license' => 'Онлайн-активация отклонена: ' . $reason]);
+        }
+
+        $envelope = $response->json('license');
+        if (! is_array($envelope)) {
+            return back()->withErrors(['license' => 'LK вернул неожиданный ответ.']);
+        }
+
+        $result = $this->core->licenseActivate(
+            json_encode($envelope, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '',
+        );
+        $this->forgetCaches();
+
+        if (! $result['ok']) {
+            return back()->withErrors([
+                'license' => 'Ядро не приняло лицензию: ' . ($result['data']['error'] ?? 'ошибка'),
+            ]);
+        }
+
+        return back()->with('status', 'Лицензия активирована онлайн: ' . (string) ($response->json('key') ?? ''));
     }
 
     /** Upload a signed revocation list. */

@@ -130,10 +130,11 @@ func (l License) GraceUntil() (time.Time, error) {
 }
 
 // BindsFingerprint reports whether the license lists the given installation.
-// An empty server list means "unbound" (single-customer builds).
+// An empty server list is treated as NOT bound: an unbound file would run on
+// any installation, so it must never validate while licensing is enforced.
 func (l License) BindsFingerprint(fp string) bool {
 	if len(l.Servers) == 0 {
-		return true
+		return false
 	}
 
 	for _, s := range l.Servers {
