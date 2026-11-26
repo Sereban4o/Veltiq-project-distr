@@ -2,10 +2,11 @@
 
 namespace App\Extensions\Ai\Http\Controllers;
 
+use App\Extensions\Ai\Services\AiAssistant;
+use App\Extensions\Ai\Services\AiConversationService;
 use App\Http\Controllers\Controller;
 use App\Models\Page;
 use App\Models\Space;
-use App\Extensions\Ai\Services\AiAssistant;
 use App\Services\Knowledgebase\PageAcl;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,8 +18,10 @@ use Throwable;
  */
 class AssistantController extends Controller
 {
-    public function __construct(private readonly AiAssistant $assistant)
-    {
+    public function __construct(
+        private readonly AiAssistant $assistant,
+        private readonly AiConversationService $conversations,
+    ) {
     }
 
     public function status(): JsonResponse
@@ -35,7 +38,7 @@ class AssistantController extends Controller
     {
         if (! $this->assistant->enabled()) {
             return response()->json([
-                'message' => 'AI-ассистент не настроен (задайте AI_ENABLED=true и OLLAMA_URL)',
+                'message' => 'AI-ассистент не настроен (включите его в админке: «ИИ-ассистент»).',
             ], 503);
         }
 
@@ -43,21 +46,41 @@ class AssistantController extends Controller
             'question' => 'required|string|min:2|max:2000',
             'types' => 'sometimes|array',
             'types.*' => 'in:' . implode(',', AiAssistant::ALLOWED_TYPES),
+            'conversation_id' => 'nullable|integer|min:1',
         ]);
 
+        $user = $request->user();
+
+        // A foreign conversation must look missing, not forbidden.
+        $conversation = isset($validated['conversation_id'])
+            ? $this->conversations->find($user, (int) $validated['conversation_id'])
+            : $this->conversations->start($user);
+
+        // Read the history before the new question is written, so it is not replayed twice.
+        $history = $this->conversations->history($conversation, $this->assistant->historyWindow());
+        $startedAt = microtime(true);
+
         try {
-            $result = $this->assistant->ask(
-                $request->user(),
-                $validated['question'],
-                $validated['types'] ?? [],
-            );
+            $result = $this->assistant->ask($user, $validated['question'], $validated['types'] ?? [], $history);
         } catch (Throwable $e) {
+            $this->conversations->recordFailure($conversation, $validated['question'], $e->getMessage());
+
             return response()->json([
                 'message' => 'Не удалось получить ответ: ' . $e->getMessage(),
             ], 503);
         }
 
-        return response()->json(['data' => $result]);
+        $this->conversations->record(
+            $conversation,
+            $validated['question'],
+            $result,
+            (int) round((microtime(true) - $startedAt) * 1000),
+        );
+
+        return response()->json(['data' => $result + [
+            'conversation_id' => (int) $conversation->id,
+            'conversation_title' => $conversation->title,
+        ]]);
     }
 
     /** Summarize a knowledgebase page (ACL-checked). */
@@ -126,7 +149,7 @@ class AssistantController extends Controller
     private function disabled(): JsonResponse
     {
         return response()->json([
-            'message' => 'AI-ассистент не настроен (задайте AI_ENABLED=true и OLLAMA_URL)',
+            'message' => 'AI-ассистент не настроен (включите его в админке: «ИИ-ассистент»).',
         ], 503);
     }
 }

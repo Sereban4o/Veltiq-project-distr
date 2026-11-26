@@ -2,9 +2,9 @@
 
 use App\Http\Controllers\Admin\AccessController;
 use App\Http\Controllers\Admin\AdminAuthController;
+use App\Http\Controllers\Admin\AiSettingsController;
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\BrandingController;
-use App\Http\Controllers\Admin\ClientBuildController;
 use App\Http\Controllers\Admin\CounterpartyController;
 use App\Http\Controllers\Admin\CrmStageController;
 use App\Http\Controllers\Admin\CustomFieldController;
@@ -18,6 +18,7 @@ use App\Http\Controllers\Admin\ReleaseController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\StorageAuditController;
 use App\Http\Controllers\Admin\StorageController;
+use App\Http\Controllers\Admin\SystemUpdateController;
 use App\Http\Controllers\Admin\TemplateController;
 use App\Http\Controllers\Admin\WebhookController;
 use App\Http\Controllers\Admin\WidgetController;
@@ -92,6 +93,12 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])->prefix('admin')->name('ad
     Route::post('/extensions/{id}/uninstall', [ExtensionController::class, 'uninstall'])
         ->name('extensions.uninstall')
         ->where('id', '[a-z0-9._-]+');
+
+    // AI assistant (Ollama) settings — stored in the settings table
+    Route::get('/ai-settings', [AiSettingsController::class, 'index'])->name('ai-settings.index');
+    Route::post('/ai-settings', [AiSettingsController::class, 'update'])->name('ai-settings.update');
+    Route::post('/ai-settings/test', [AiSettingsController::class, 'test'])->name('ai-settings.test');
+    Route::post('/ai-settings/test-web', [AiSettingsController::class, 'testWeb'])->name('ai-settings.test-web');
 
     // Users
     Route::get('/users', [DashboardController::class, 'users'])->name('users.index');
@@ -186,11 +193,12 @@ Route::middleware(['auth', EnsureUserIsAdmin::class])->prefix('admin')->name('ad
     Route::post('/releases', [ReleaseController::class, 'store'])->name('releases.store');
     Route::delete('/releases/{platform}', [ReleaseController::class, 'destroy'])->name('releases.delete');
 
-    // Preset client builds (GitHub Actions dispatch)
-    Route::get('/client-builds', [ClientBuildController::class, 'index'])->name('client-builds.index');
-    Route::post('/client-builds', [ClientBuildController::class, 'store'])->name('client-builds.store');
-    Route::put('/client-builds/settings', [ClientBuildController::class, 'settings'])->name('client-builds.settings');
-    Route::get('/client-builds/status', [ClientBuildController::class, 'status'])->name('client-builds.status');
+    // Whole-system updates from the central update service (update.veltiq.ru)
+    Route::get('/system-update', [SystemUpdateController::class, 'index'])->name('system-update.index');
+    Route::post('/system-update/check', [SystemUpdateController::class, 'check'])
+        ->name('system-update.check')->middleware('throttle:10,1');
+    Route::post('/system-update/apply', [SystemUpdateController::class, 'apply'])
+        ->name('system-update.apply')->middleware('throttle:3,1');
 
     // Runtime branding / theme
     Route::get('/branding', [BrandingController::class, 'index'])->name('branding.index');

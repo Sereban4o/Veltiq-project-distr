@@ -90,7 +90,7 @@
     <p style="color: #6B778C; font-size: 0.875rem; margin-bottom: 1.25rem;">
         Введите e-mail и пароль учётной записи Veltiq LK (lk.veltiq.ru) — сервер лицензий
         активирует продукт на этот инсталляционный отпечаток и вернёт подписанную лицензию.
-        Ключ лицензии нужен, только если у аккаунта несколько лицензий.
+        Ключ лицензии обязателен — он выдаётся в LK после оплаты заказа.
     </p>
     <form method="POST" action="{{ route('admin.license.activate-online') }}" style="display:flex; gap:1rem; flex-wrap:wrap; align-items:flex-end;">
         @csrf
@@ -103,8 +103,8 @@
             <input type="password" name="password" autocomplete="off" required>
         </div>
         <div style="flex:1; min-width:180px;">
-            <label>Ключ лицензии (опц.)</label>
-            <input type="text" name="key" value="{{ old('key') }}" placeholder="L-2026-0001">
+            <label>Ключ лицензии</label>
+            <input type="text" name="key" value="{{ old('key') }}" placeholder="L-2026-0001" autocomplete="off" required>
         </div>
         <div style="flex:0; display:flex; align-items:flex-end;">
             <button type="submit" class="btn btn-primary">Активировать онлайн</button>

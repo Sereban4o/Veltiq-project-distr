@@ -91,8 +91,10 @@ class LicenseController extends Controller
         $data = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
-            'key' => ['nullable', 'string', 'max:64'],
+            'key' => ['required', 'string', 'max:64'],
         ]);
+
+        $key = mb_strtoupper(trim($data['key']));
 
         $apiUrl = (string) config('license.lk_api_url');
         $token = (string) config('license.project_token');
@@ -116,7 +118,7 @@ class LicenseController extends Controller
                 ->post($apiUrl . '/v1/account/activate', [
                     'email' => $data['email'],
                     'password' => $data['password'],
-                    'key' => $data['key'] ?? null,
+                    'key' => $key,
                     'fingerprint' => $fingerprint,
                     'hostname' => gethostname() ?: null,
                     'version' => (string) config('app.version', ''),
@@ -127,6 +129,12 @@ class LicenseController extends Controller
 
         if (! $response->successful()) {
             $reason = (string) ($response->json('reason') ?? 'activation_failed');
+
+            if ($reason === 'no_license') {
+                return back()->withErrors([
+                    'key' => 'Лицензия с таким ключом не найдена в аккаунте LK (или привязана к другому аккаунту).',
+                ]);
+            }
 
             return back()->withErrors(['license' => 'Онлайн-активация отклонена: ' . $reason]);
         }

@@ -103,15 +103,15 @@ func main() {
 }
 
 // newPlatformService assembles the licensing control plane from the environment.
-// It never fails the process: without a public key the product simply reports the
-// grandfather state, and without Postgres it falls back to file state.
+// It never fails the process: without a public key the product reports an
+// unlicensed (blocked) state, and without Postgres it falls back to file state.
 func newPlatformService() *platform.Service {
 	cfg := platform.Config{
 		StateDir:           envOr("CORE_STATE_DIR", "/var/lib/core"),
 		DatabaseURL:        os.Getenv("CORE_DATABASE_URL"),
 		PublicKeyBase64:    os.Getenv("LICENSE_PUBLIC_KEY"),
 		ClusterID:          os.Getenv("CORE_CLUSTER_ID"),
-		AllowGrandfather:   envBool("LICENSE_ALLOW_GRANDFATHER", false),
+		AllowGrandfather:   false, // grandfathering is never allowed (no env bypass)
 		LicenseServerURL:   os.Getenv("LICENSE_SERVER_URL"),
 		LicenseServerToken: os.Getenv("LICENSE_PROJECT_TOKEN"),
 		HeartbeatInterval:  time.Duration(envInt("LICENSE_HEARTBEAT_HOURS", 6)) * time.Hour,

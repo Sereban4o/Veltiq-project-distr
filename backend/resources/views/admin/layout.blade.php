@@ -424,12 +424,13 @@
                 <div class="nav-label">Платформа</div>
                 <a href="{{ route('admin.license.index') }}" class="{{ request()->routeIs('admin.license.*') ? 'active' : '' }}">🔑 Лицензия</a>
                 <a href="{{ route('admin.extensions.index') }}" class="{{ request()->routeIs('admin.extensions.*') ? 'active' : '' }}">🧱 Расширения</a>
+                <a href="{{ route('admin.system-update.index') }}" class="{{ request()->routeIs('admin.system-update.*') ? 'active' : '' }}">🔄 Обновления</a>
+                <a href="{{ route('admin.ai-settings.index') }}" class="{{ request()->routeIs('admin.ai-settings.*') ? 'active' : '' }}">🤖 ИИ-ассистент</a>
             </div>
 
             <div class="nav-group">
                 <div class="nav-label">Клиенты</div>
                 <a href="{{ route('admin.releases.index') }}" class="{{ request()->routeIs('admin.releases.*') ? 'active' : '' }}">🚀 Релизы</a>
-                <a href="{{ route('admin.client-builds.index') }}" class="{{ request()->routeIs('admin.client-builds.*') ? 'active' : '' }}">🏗️ Сборки</a>
             </div>
         </nav>
 

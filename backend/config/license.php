@@ -17,9 +17,12 @@ return [
     |
     */
 
-    'enabled' => (bool) env('LICENSING_ENABLED', true),
+    // Licensing is always enabled and enforced. Removing the environment
+    // toggles prevents an operator from bypassing it by editing .env. Feature
+    // tests may still override these values at runtime via config().
+    'enabled' => true,
 
-    'enforce' => (bool) env('LICENSE_ENFORCE', false),
+    'enforce' => true,
 
     // Public key of the *core* (not the vendor key). Pinned from the core on the
     // first successful call and cached in `Setting`.
