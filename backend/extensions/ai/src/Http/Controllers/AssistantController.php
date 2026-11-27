@@ -7,6 +7,7 @@ use App\Extensions\Ai\Services\AiConversationService;
 use App\Http\Controllers\Controller;
 use App\Models\Page;
 use App\Models\Space;
+use App\Models\User;
 use App\Services\Knowledgebase\PageAcl;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,12 +25,16 @@ class AssistantController extends Controller
     ) {
     }
 
-    public function status(): JsonResponse
+    public function status(Request $request): JsonResponse
     {
+        $user = $request->user();
+
         return response()->json([
             'data' => [
-                'enabled' => $this->assistant->enabled(),
+                'enabled' => $this->assistant->enabled() && $this->assistant->canUse($user),
                 'model' => $this->assistant->model(),
+                'sections' => $this->assistant->sections(),
+                'show_sources' => $this->assistant->showSources(),
             ],
         ]);
     }
@@ -40,6 +45,10 @@ class AssistantController extends Controller
             return response()->json([
                 'message' => 'AI-ассистент не настроен (включите его в админке: «ИИ-ассистент»).',
             ], 503);
+        }
+
+        if ($forbidden = $this->forbidden($request->user())) {
+            return $forbidden;
         }
 
         $validated = $request->validate([
@@ -90,6 +99,10 @@ class AssistantController extends Controller
             return $this->disabled();
         }
 
+        if ($forbidden = $this->forbidden($request->user())) {
+            return $forbidden;
+        }
+
         $validated = $request->validate([
             'page_id' => 'required|integer|exists:pages,id',
         ]);
@@ -126,6 +139,10 @@ class AssistantController extends Controller
             return $this->disabled();
         }
 
+        if ($forbidden = $this->forbidden($request->user())) {
+            return $forbidden;
+        }
+
         $validated = $request->validate([
             'kind' => 'required|in:task,mail',
             'prompt' => 'required|string|min:3|max:2000',
@@ -144,6 +161,18 @@ class AssistantController extends Controller
                 'model' => $this->assistant->model(),
             ],
         ]);
+    }
+
+    /** The assistant is off for this role when an administrator limited it. */
+    private function forbidden(?User $user): ?JsonResponse
+    {
+        if ($user === null || $this->assistant->canUse($user)) {
+            return null;
+        }
+
+        return response()->json([
+            'message' => 'ИИ-ассистент недоступен для вашей роли.',
+        ], 403);
     }
 
     private function disabled(): JsonResponse

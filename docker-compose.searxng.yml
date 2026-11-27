@@ -1,0 +1,39 @@
+# SearXNG — web fallback for the AI assistant ("Ask the knowledge base").
+#
+# Optional: only needed when an administrator enables the web fallback.
+# The service is internal-only (no published port): the backend reaches it over
+# the docker network at http://searxng:8080. Only the user's question text is
+# sent there, and only when the internal search found nothing.
+#
+#   docker compose -f docker-compose.prod.yml -f docker-compose.searxng.yml up -d searxng
+#
+# Requires in backend/.env.production (then config:clear / config:cache and
+# recreate the app container):
+#   AI_WEB_ENABLED=true
+#   AI_WEB_URL=http://searxng:8080
+#   SEARXNG_SECRET=<long random string>
+#
+# The JSON API is enabled in deploy/searxng/settings.yml — without
+# `search.formats: [html, json]` SearXNG answers 403 to /search?format=json.
+services:
+  searxng:
+    image: searxng/searxng:latest
+    container_name: tasksbase-searxng-1
+    restart: unless-stopped
+    environment:
+      - SEARXNG_BASE_URL=http://searxng:8080/
+      - SEARXNG_SECRET=${SEARXNG_SECRET:?set SEARXNG_SECRET (see the header of this file)}
+    volumes:
+      - ./deploy/searxng/settings.yml:/etc/searxng/settings.yml:ro
+    networks:
+      - tasksbase_default
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  tasksbase_default:
+    external: true
+    name: tasksbase_default

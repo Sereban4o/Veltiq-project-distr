@@ -3,6 +3,25 @@
 $url = (string) env('OLLAMA_URL', '');
 $enabledEnv = env('AI_ENABLED');
 
+/**
+ * Env lists are comma/space separated ("pages,issues") — the admin UI stores
+ * the same values as JSON in the settings table.
+ *
+ * @return list<string>
+ */
+$list = static function (?string $raw): array {
+    if ($raw === null || trim($raw) === '') {
+        return [];
+    }
+
+    $parts = preg_split('/[\s,]+/', $raw) ?: [];
+
+    return array_values(array_unique(array_filter(
+        array_map(static fn (mixed $value): string => trim((string) $value), $parts),
+        static fn (string $value): bool => $value !== '',
+    )));
+};
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -41,30 +60,74 @@ return [
     // How many previous messages are replayed as chat history (0 = stateless).
     'history_messages' => (int) env('AI_HISTORY_MESSAGES', 6),
 
+    // Whether answers expose the source list in the dialog. Citations like [1]
+    // stay in the text either way: this only hides the "Источники" block.
+    'show_sources' => (bool) filter_var(env('AI_SHOW_SOURCES', true), FILTER_VALIDATE_BOOL),
+
     // Conversations inactive for longer than this are pruned.
     'retention_days' => (int) env('AI_RETENTION_DAYS', 180),
 
     /*
     |--------------------------------------------------------------------------
-    | Web fallback (SearXNG)
+    | Sections the assistant may read
     |--------------------------------------------------------------------------
     |
-    | Used only when the internal search finds nothing. Only the user's
-    | question is sent, and only after an administrator opts in: by default
-    | nothing leaves the infrastructure.
+    | An administrator picks the sections in the admin UI (stored as JSON in
+    | the settings table, which wins over these defaults). An empty list means
+    | "every section", so an unconfigured install keeps working as before.
+    |
+    | Values match AiRetriever::TYPES; chat is deliberately not searchable.
+    |
+    */
+
+    'sections' => $list(env('AI_SECTIONS')),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Roles allowed to use the assistant
+    |--------------------------------------------------------------------------
+    |
+    | Role names (App\Models\Role), e.g. "admin,manager". An empty list means
+    | every authenticated user. Retrieval stays permission-aware either way.
+    |
+    */
+
+    'roles' => $list(env('AI_ROLES')),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Web fallback (search engine or direct page reading)
+    |--------------------------------------------------------------------------
+    |
+    |  fetch    — download the http(s) links the question itself mentions
+    |             (allowlisted hosts only, no search engine involved);
+    |  searxng  — ask a self-hosted SearXNG instance, question text only;
+    |  both     — try the mentioned links first, then fall back to search.
+    |
+    | Off by default: with the flag cleared no outbound request is made at all.
     |
     */
 
     'web_enabled' => (bool) filter_var(env('AI_WEB_ENABLED', false), FILTER_VALIDATE_BOOL),
 
-    // Base URL of a SearXNG instance (e.g. http://searxng:8080). It usually
-    // lives on the internal network, so private addresses are allowed here:
-    // the address is set by an administrator, not by users.
+    // Which mechanism the fallback uses: fetch, searxng or both.
+    'web_provider' => (string) env('AI_WEB_PROVIDER', 'fetch'),
+
+    // Base URL of the SearXNG instance (e.g. http://searxng:8080). It lives on
+    // the internal network, so private addresses are allowed here: the address
+    // is set by an administrator, not by users.
     'web_url' => rtrim((string) env('AI_WEB_URL', ''), '/'),
 
-    // How long (seconds) to wait for the external engine.
+    // Hosts that may be read (fetch mode), e.g. "docs.example.com,example.org".
+    // A bare domain also allows its subdomains; IP literals must be public.
+    'web_domains' => $list(env('AI_WEB_DOMAINS')),
+
+    // How long (seconds) to wait for one page or one search response.
     'web_timeout' => (int) env('AI_WEB_TIMEOUT', 8),
 
-    // How many external results are fed to the model as context.
+    // How many external sources are used: links fetched / results taken.
     'web_results' => (int) env('AI_WEB_RESULTS', 3),
+
+    // Hard cap on the extracted text of one fetched page (characters).
+    'web_max_chars' => (int) env('AI_WEB_MAX_CHARS', 4000),
 ];

@@ -52,7 +52,7 @@
             <div style="flex:1;min-width:150px;">
                 <label>Источников в контексте</label>
                 <input type="number" name="ai_max_sources" value="{{ $settings['ai_max_sources'] }}" min="1" max="20">
-                <div class="muted">Общий лимит по всем разделам (документация, задачи, файлы, почта, календарь, CRM, табель, сотрудники); рекомендуется 8–12</div>
+                <div class="muted">Общий лимит по всем разделам; рекомендуется 8–12</div>
             </div>
             <div style="flex:1;min-width:180px;">
                 <label>Лимит контекста, символов</label>
@@ -75,32 +75,117 @@
         </div>
 
         <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border,#ddd);">
-            <h3 style="margin:0 0 .25rem;">Интернет-поиск (SearXNG)</h3>
+            <h3 style="margin:0 0 .25rem;">Разделы, которые ассистент может читать</h3>
             <p class="muted" style="margin:0 0 .75rem;">
-                Если во внутренней базе ничего не нашлось, ассистент может спросить SearXNG.
-                Наружу уходит <b>только текст вопроса</b>: названия страниц и задач, данные CRM,
-                имена сотрудников и внутренние сниппеты не отправляются.
-                При выключенном флаге исходящих запросов нет вообще.
+                Снятые галочки полностью убирают раздел из поиска: ассистент не увидит его ни по запросу,
+                ни по явному указанию типа. Права доступа внутри разделов всё равно проверяются —
+                пользователь не получит то, что не может открыть в интерфейсе.
+                <b>Ничего не выбрано — доступны все разделы.</b>
+                Личные сообщения чата недоступны всегда.
+            </p>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.35rem .75rem;">
+                @foreach($sections as $value => $label)
+                    <label style="display:flex;align-items:center;gap:.5rem;color:var(--text);">
+                        <input type="checkbox" name="ai_sections[]" value="{{ $value }}" style="width:auto;"
+                               @checked(in_array($value, $settings['ai_sections'], true))>
+                        {{ $label }}
+                    </label>
+                @endforeach
+            </div>
+            <div class="muted" style="margin-top:.5rem;">env: <code>{{ $envSections !== '' ? $envSections : '—' }}</code></div>
+        </div>
+
+        <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border,#ddd);">
+            <h3 style="margin:0 0 .25rem;">Кому доступен ассистент</h3>
+            <p class="muted" style="margin:0 0 .75rem;">
+                Роли, которые видят ассистента и могут задавать вопросы. Остальным API отвечает
+                403, а точка входа скрыта. <b>Ничего не выбрано — доступен всем авторизованным.</b>
+            </p>
+
+            @if($roles === [])
+                <div class="muted">Роли не найдены — ограничение по ролям недоступно.</div>
+            @else
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.35rem .75rem;">
+                    @foreach($roles as $role)
+                        <label style="display:flex;align-items:center;gap:.5rem;color:var(--text);">
+                            <input type="checkbox" name="ai_roles[]" value="{{ $role }}" style="width:auto;"
+                                   @checked(in_array($role, $settings['ai_roles'], true))>
+                            {{ $role }}
+                        </label>
+                    @endforeach
+                </div>
+            @endif
+            <div class="muted" style="margin-top:.5rem;">env: <code>{{ $envRoles !== '' ? $envRoles : '—' }}</code></div>
+        </div>
+
+        <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border,#ddd);">
+            <h3 style="margin:0 0 .25rem;">Вывод ответов</h3>
+            <p class="muted" style="margin:0 0 .75rem;">
+                Список источников под ответом помогает проверить, откуда взяты факты. Если он не нужен
+                пользователям, снимите флажок: сноски вида <code>[1]</code> в тексте ответа останутся,
+                скроется только блок «Источники».
+            </p>
+
+            <label style="display:flex;align-items:center;gap:.5rem;color:var(--text);">
+                <input type="checkbox" name="ai_show_sources" value="1" style="width:auto;" @checked((string) $settings['ai_show_sources'] === '1')>
+                Показывать источники в диалоге
+            </label>
+        </div>
+
+        <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border,#ddd);">
+            <h3 style="margin:0 0 .25rem;">Выход в интернет</h3>
+            <p class="muted" style="margin:0 0 .75rem;">
+                Срабатывает только если во внутренней базе ничего не нашлось. При выключенном флажке
+                исходящих запросов нет вообще.
             </p>
 
             <label style="display:flex;align-items:center;gap:.5rem;color:var(--text);">
                 <input type="checkbox" name="ai_web_enabled" value="1" style="width:auto;" @checked((string) $settings['ai_web_enabled'] === '1')>
-                Разрешить поиск в интернете, если в базе ничего не нашлось
+                Разрешить выход в интернет
             </label>
 
-            <div class="row" style="gap:1rem;margin-top:.5rem;">
-                <div style="flex:2;min-width:240px;">
+            <div class="row" style="gap:1rem;margin-top:.75rem;">
+                <div style="flex:1;min-width:260px;">
+                    <label>Режим</label>
+                    <select name="ai_web_provider">
+                        <option value="fetch" @selected($settings['ai_web_provider'] === 'fetch')>Чтение ссылок из вопроса (без поисковика)</option>
+                        <option value="searxng" @selected($settings['ai_web_provider'] === 'searxng')>Поиск через SearXNG</option>
+                        <option value="both" @selected($settings['ai_web_provider'] === 'both')>Сначала ссылки, затем поиск SearXNG</option>
+                    </select>
+                    <div class="muted">
+                        <b>Чтение</b> скачивает только адреса, указанные в тексте вопроса, и только с разрешённых доменов;
+                        наружу уходит сам запрос страницы. <b>Поиск</b> отправляет в SearXNG только текст вопроса.
+                        В режиме «оба» ссылка из вопроса имеет приоритет.
+                    </div>
+                </div>
+                <div style="flex:1;min-width:240px;">
                     <label>Адрес SearXNG</label>
                     <input name="ai_web_url" value="{{ $settings['ai_web_url'] }}" maxlength="255" placeholder="http://searxng:8080">
-                    <div class="muted">env: <code>{{ $envWebUrl !== '' ? $envWebUrl : '—' }}</code> · нужен <code>search.formats: [html, json]</code> в settings.yml</div>
+                    <div class="muted">
+                        env: <code>{{ $envWebUrl !== '' ? $envWebUrl : '—' }}</code> · нужен
+                        <code>search.formats: [html, json]</code> в settings.yml самого SearXNG
+                    </div>
                 </div>
-                <div style="flex:1;min-width:140px;">
+            </div>
+
+            <div class="row" style="gap:1rem;margin-top:.5rem;">
+                <div style="flex:2;min-width:260px;">
+                    <label>Разрешённые домены (режим чтения)</label>
+                    <textarea name="ai_web_domains" rows="4" maxlength="2000" placeholder="example.com&#10;docs.example.com">{{ $settings['ai_web_domains'] }}</textarea>
+                    <div class="muted">
+                        По одному в строке. Домен разрешает и поддомены; <code>*.example.com</code> — только поддомены.
+                        Приватные и служебные адреса (localhost, 10.x, 192.168.x, 172.16–31.x) блокируются даже при добавлении в список.
+                        env: <code>{{ $envDomains !== '' ? $envDomains : '—' }}</code>
+                    </div>
+                </div>
+                <div style="flex:1;min-width:150px;">
                     <label>Таймаут, сек</label>
                     <input type="number" name="ai_web_timeout" value="{{ $settings['ai_web_timeout'] }}" min="1" max="30">
-                </div>
-                <div style="flex:1;min-width:160px;">
-                    <label>Внешних ссылок в контексте</label>
+                    <label style="margin-top:.75rem;">Источников из интернета</label>
                     <input type="number" name="ai_web_results" value="{{ $settings['ai_web_results'] }}" min="1" max="5">
+                    <label style="margin-top:.75rem;">Символов со страницы</label>
+                    <input type="number" name="ai_web_max_chars" value="{{ $settings['ai_web_max_chars'] }}" min="500" max="20000">
                 </div>
             </div>
         </div>
@@ -119,14 +204,15 @@
         <button class="btn btn-secondary" type="submit">Проверить подключение</button>
     </form>
 
-    <h3 style="margin:1.5rem 0 .25rem;">Проверка SearXNG</h3>
+    <h3 style="margin:1.5rem 0 .25rem;">Проверка выхода в интернет</h3>
     <p class="muted" style="margin-top:0;">
-        Запрашивает <code>/search?q=tasksbase&amp;format=json</code>. Если приходит 403 — включите формат JSON
-        в <code>settings.yml</code> самого SearXNG.
+        Проверяет выбранный режим: в режиме чтения скачивает главную первого домена из списка,
+        в режиме поиска запрашивает SearXNG (<code>/search?q=tasksbase&amp;format=json</code>),
+        в режиме «оба» — оба механизма. Настройки должны быть сохранены заранее.
     </p>
     <form method="POST" action="{{ route('admin.ai-settings.test-web') }}">
         @csrf
-        <button class="btn btn-secondary" type="submit">Проверить SearXNG</button>
+        <button class="btn btn-secondary" type="submit">Проверить выход в интернет</button>
     </form>
 </div>
 @endsection

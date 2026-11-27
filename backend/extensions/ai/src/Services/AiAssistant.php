@@ -27,13 +27,65 @@ class AiAssistant
 
     public function __construct(
         private readonly AiRetriever $retriever,
-        private readonly WebSearch $web,
+        private readonly WebFetch $web,
+        private readonly WebSearch $search,
+        private readonly RecentIssues $recent,
     ) {
     }
+
+    /**
+     * Words that ask for a listing rather than for a specific record: with them
+     * the keyword search is not the right tool ("какие открытые задачи" shares
+     * no words with the issue summaries).
+     */
+    private const LISTING_MARKERS = [
+        'список', 'какие', 'перечисли', 'покажи', 'сколько', 'мои', 'открыт', 'закрыт',
+        'в работе', 'на мне', 'назначен', 'срочн', 'просроч',
+    ];
+
+    /**
+     * The section the question is about. A listing marker alone ("какие
+     * новости в интернете") must not hijack a web question, so the question
+     * has to name the tasks section as well.
+     */
+    private const TASK_WORDS = [
+        'задач', 'тикет', 'таск', 'issue', 'спринт', 'бэклог', 'backlog', 'канбан', 'kanban',
+    ];
 
     public function enabled(): bool
     {
         return $this->enabledFlag() && $this->url() !== '';
+    }
+
+    /**
+     * Sections an administrator allowed the assistant to read, in the order of
+     * {@see AiRetriever::TYPES}. An empty configuration means "every section".
+     *
+     * @return list<string>
+     */
+    public function sections(): array
+    {
+        $configured = $this->decodeList(Setting::get('ai_sections'), (array) config('ai.sections', []));
+        $sections = array_values(array_intersect($configured, self::ALLOWED_TYPES));
+
+        return $sections !== [] ? $sections : self::ALLOWED_TYPES;
+    }
+
+    /**
+     * Whether the user's role may use the assistant at all. Retrieval stays
+     * permission-aware, so this only decides who sees the entry point.
+     */
+    public function canUse(User $user): bool
+    {
+        $roles = $this->decodeList(Setting::get('ai_roles'), (array) config('ai.roles', []));
+
+        if ($roles === []) {
+            return true;
+        }
+
+        $role = $user->role?->name;
+
+        return $role !== null && in_array($role, $roles, true);
     }
 
     public function model(): string
@@ -50,6 +102,21 @@ class AiAssistant
     }
 
     /**
+     * Whether the client should render the source list under an answer. The
+     * answer text keeps its [n] citations either way.
+     */
+    public function showSources(): bool
+    {
+        $raw = Setting::get('ai_show_sources');
+
+        if ($raw === null || $raw === '') {
+            return (bool) config('ai.show_sources', true);
+        }
+
+        return in_array($raw, ['1', 'true', 'on', 'yes'], true);
+    }
+
+    /**
      * Answer a question from the retrieval context.
      *
      * @param  list<string>  $types
@@ -59,15 +126,32 @@ class AiAssistant
     public function ask(User $user, string $question, array $types = [], array $history = []): array
     {
         $types = $this->normalizeTypes($types);
+
+        // A question about tasks is answered from tasks: mixing mail or pages
+        // in makes the model report that no tasks were found at all.
+        if (in_array('issues', $types, true) && $this->hasListingIntent($question)) {
+            $types = ['issues'];
+        }
+
         $maxSources = max(1, (int) $this->setting('ai_max_sources', config('ai.max_sources', 8)));
 
         $sources = $this->retriever->search($user, $question, $types, $maxSources);
 
         // Nothing was found inside the product: only then, and only with an
-        // explicit administrator opt-in, ask the external engine — with the
-        // question text alone.
+        // explicit administrator opt-in, use the configured web fallback:
+        // page reading, a SearXNG search, or reading first and search second.
         if ($sources === []) {
-            $sources = $this->web->search($question, $maxSources);
+            if (in_array('issues', $types, true) && $this->hasListingIntent($question)) {
+                $sources = $this->recent->forUser(
+                    $user,
+                    min($maxSources, 10),
+                    $this->listingMode($question),
+                );
+            }
+
+            if ($sources === []) {
+                $sources = $this->externalSources($question, $maxSources);
+            }
         }
 
         return [
@@ -75,6 +159,84 @@ class AiAssistant
             'sources' => $sources,
             'model' => $this->model(),
         ];
+    }
+
+    /** Web fallback mechanism chosen by an administrator. */
+    public function webProvider(): string
+    {
+        $provider = mb_strtolower(trim((string) $this->setting('ai_web_provider', config('ai.web_provider', 'fetch'))));
+
+        return in_array($provider, ['fetch', 'searxng', 'both'], true) ? $provider : 'fetch';
+    }
+
+    /** Whether the question asks for a list of tasks rather than a record. */
+    private function hasListingIntent(string $question): bool
+    {
+        $normalized = mb_strtolower($question);
+
+        if (! $this->mentionsTasks($normalized)) {
+            return false;
+        }
+
+        foreach (self::LISTING_MARKERS as $marker) {
+            if (str_contains($normalized, $marker)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function mentionsTasks(string $normalized): bool
+    {
+        foreach (self::TASK_WORDS as $word) {
+            if (str_contains($normalized, $word)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** Status filter implied by the question wording. */
+    private function listingMode(string $question): string
+    {
+        $normalized = mb_strtolower($question);
+
+        // Checked first: "закрытые" must not fall into the open bucket.
+        if (preg_match('/закрыт|выполнен|готово|завершен|сделан/u', $normalized) === 1) {
+            return RecentIssues::MODE_CLOSED;
+        }
+
+        if (preg_match('/открыт|в работе|незакрыт|активн|текущ|предстоит/u', $normalized) === 1) {
+            return RecentIssues::MODE_OPEN;
+        }
+
+        return RecentIssues::MODE_ALL;
+    }
+
+    /**
+     * External sources for a question the internal search could not answer.
+     * Only the question text leaves the infrastructure (and, in fetch mode,
+     * the link it contains).
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function externalSources(string $question, int $limit): array
+    {
+        $provider = $this->webProvider();
+
+        // A link the user typed is more precise than a search result, so it is
+        // tried first; the search only runs when nothing could be read.
+        if ($provider !== 'searxng') {
+            $sources = $this->web->read($question, $limit);
+
+            if ($sources !== []) {
+                return $sources;
+            }
+        }
+
+        return $provider !== 'fetch' ? $this->search->search($question, $limit) : [];
     }
 
     /**
@@ -333,13 +495,35 @@ class AiAssistant
     }
 
     /**
+     * Accepts a JSON array (admin UI) or a comma/space separated list (env).
+     *
+     * @param  list<string>  $fallback
+     * @return list<string>
+     */
+    private function decodeList(?string $raw, array $fallback): array
+    {
+        if ($raw === null || trim($raw) === '') {
+            return array_values(array_map(static fn (mixed $value): string => (string) $value, $fallback));
+        }
+
+        $decoded = json_decode($raw, true);
+
+        if (is_array($decoded)) {
+            return array_values(array_map(static fn (mixed $value): string => (string) $value, $decoded));
+        }
+
+        return preg_split('/[\s,]+/', $raw) ?: [];
+    }
+
+    /**
      * @param  list<string>  $types
      * @return list<string>
      */
     private function normalizeTypes(array $types): array
     {
-        $types = array_values(array_unique(array_intersect($types, self::ALLOWED_TYPES)));
+        $allowed = $this->sections();
+        $types = array_values(array_unique(array_intersect($types, $allowed)));
 
-        return $types !== [] ? $types : self::DEFAULT_TYPES;
+        return $types !== [] ? $types : $allowed;
     }
 }

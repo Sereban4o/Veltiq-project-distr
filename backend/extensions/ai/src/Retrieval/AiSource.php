@@ -24,13 +24,16 @@ final class AiSource
         ?string $url,
         ?string $snippet,
         array $meta = [],
+        int $snippetLimit = self::SNIPPET_LIMIT,
     ): array {
         return [
             'type' => $type,
             'id' => (int) $id,
             'title' => self::clip(trim((string) $title), self::TITLE_LIMIT),
             'url' => trim((string) $url),
-            'snippet' => self::clip(trim((string) $snippet), self::SNIPPET_LIMIT),
+            // A downloaded page carries its body in the snippet, so the caller
+            // may raise the cap; retrieved records keep the short default.
+            'snippet' => self::clip(trim((string) $snippet), max(1, $snippetLimit)),
             'meta' => $meta,
         ];
     }

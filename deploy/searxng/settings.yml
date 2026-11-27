@@ -1,0 +1,19 @@
+# Minimal SearXNG configuration for the AI assistant's web fallback.
+#
+# Served inside the docker network only (see docker-compose.searxng.yml); the
+# backend talks to http://searxng:8080. The JSON API is what the assistant uses:
+# without `json` in search.formats the /search endpoint answers 403.
+use_default_settings: true
+
+server:
+  # Overridden by the SEARXNG_SECRET environment variable in docker compose.
+  secret_key: "change-me"
+  # A single trusted client lives on the internal network.
+  limiter: false
+  image_proxy: false
+
+search:
+  safe_search: 1
+  formats:
+    - html
+    - json
