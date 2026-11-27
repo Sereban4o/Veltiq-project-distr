@@ -232,12 +232,29 @@ services:
     build:
       context: ./core
       dockerfile: Dockerfile
+      args:
+        # Vendor public key pinned into the binary at build time. Compose reads it
+        # from the shell or the project `.env`; pass it explicitly when building:
+        #   LICENSE_PUBLIC_KEY_B64=<base64> docker compose -f docker-compose.prod.yml build core
+        # An empty value produces a development build that falls back to the env.
+        LICENSE_PUBLIC_KEY_B64: ${LICENSE_PUBLIC_KEY_B64:-}
     env_file:
       - ./backend/.env.production
+    # The license fingerprint is derived from ClusterID, APP_KEY, InstallID and
+    # the hostname. Docker would otherwise give the container a fresh hostname
+    # (its own id) on every recreate, so the fingerprint — and therefore the
+    # license binding — changed on each `up -d`. Pin it.
+    hostname: tasksbase-core
     environment:
       - CORE_STATE_DIR=/var/lib/core
-      - LICENSE_PUBLIC_KEY=${LICENSE_PUBLIC_KEY:-}
-      - LICENSE_SERVER_URL=${LICENSE_SERVER_URL:-}
+      # Stable, operator-provided installation id; optional but recommended, it
+      # keeps the fingerprint stable even if the hostname ever changes.
+      - CORE_INSTALL_ID=${CORE_INSTALL_ID:-}
+      # LICENSE_PUBLIC_KEY is deliberately NOT forwarded here: the trust root is
+      # compiled into the binary. LICENSE_SERVER_URL / LICENSE_PROJECT_TOKEN come
+      # from env_file above, so backend/.env.production is their single source —
+      # an empty compose default used to override it and silently disabled the
+      # license server on the core only.
       - LICENSE_HEARTBEAT_HOURS=${LICENSE_HEARTBEAT_HOURS:-6}
     # Compose interpolation only reads the shell and the project `.env` — never
     # `env_file` — so CORE_TOKEN/POSTGRES_* (declared in backend/.env.production)

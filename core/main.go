@@ -17,6 +17,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -32,6 +33,56 @@ import (
 type server struct {
 	token    string
 	platform *platform.Service
+}
+
+// defaultLicensePublicKey is the vendor's Ed25519 public key (base64), pinned at
+// build time:
+//
+//	go build -ldflags "-X main.defaultLicensePublicKey=<base64>"
+//
+// The key is the trust root for every license check, so it must not live in the
+// environment: whoever can edit .env could otherwise substitute their own key
+// and self-sign a license, which is exactly the bypass the licensing gate exists
+// to prevent. Baking it also makes a lost or refreshed .env harmless.
+var defaultLicensePublicKey string
+
+// licenseKeyOverrideEnv re-enables the environment key for development and for
+// self-hosted license servers whose key is not the vendor one. It is never set
+// in a customer installation.
+const licenseKeyOverrideEnv = "LICENSE_ALLOW_KEY_OVERRIDE"
+
+// resolveLicensePublicKey returns the key used to verify license signatures and
+// reports whether that key is pinned in the binary. Precedence: the pinned key,
+// unless the override flag is set and the environment provides one; when nothing
+// is pinned, the environment value is used with a loud warning, so an older
+// installation keeps working after an upgrade.
+func resolveLicensePublicKey() (string, bool) {
+	pinned := strings.TrimSpace(defaultLicensePublicKey)
+	fromEnv := strings.TrimSpace(os.Getenv("LICENSE_PUBLIC_KEY"))
+	override := envBool(licenseKeyOverrideEnv, false)
+
+	switch {
+	case pinned != "":
+		if override && fromEnv != "" {
+			log.Printf("license: %s is set — using the key from the environment instead of the pinned vendor key", licenseKeyOverrideEnv)
+
+			return fromEnv, true
+		}
+
+		if fromEnv != "" && fromEnv != pinned {
+			log.Printf("license: ignoring LICENSE_PUBLIC_KEY from the environment: the vendor key is pinned in the binary")
+		}
+
+		return pinned, true
+
+	case fromEnv != "":
+		log.Printf("license: WARNING vendor public key is not pinned in this build (rebuild with -ldflags \"-X main.defaultLicensePublicKey=…\"); using the environment value, which an operator can replace")
+
+		return fromEnv, false
+
+	default:
+		return "", false
+	}
 }
 
 type freeSlotsRequest struct {
@@ -106,10 +157,16 @@ func main() {
 // It never fails the process: without a public key the product reports an
 // unlicensed (blocked) state, and without Postgres it falls back to file state.
 func newPlatformService() *platform.Service {
+	licensePublicKey, pinned := resolveLicensePublicKey()
+
+	if !pinned && licensePublicKey == "" {
+		log.Printf("license: no vendor public key configured — license verification is disabled, the product will report an unlicensed state")
+	}
+
 	cfg := platform.Config{
 		StateDir:           envOr("CORE_STATE_DIR", "/var/lib/core"),
 		DatabaseURL:        os.Getenv("CORE_DATABASE_URL"),
-		PublicKeyBase64:    os.Getenv("LICENSE_PUBLIC_KEY"),
+		PublicKeyBase64:    licensePublicKey,
 		ClusterID:          os.Getenv("CORE_CLUSTER_ID"),
 		AllowGrandfather:   false, // grandfathering is never allowed (no env bypass)
 		LicenseServerURL:   os.Getenv("LICENSE_SERVER_URL"),
